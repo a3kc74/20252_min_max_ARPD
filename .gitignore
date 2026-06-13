@@ -1,0 +1,36 @@
+# Byte-compiled / optimized / DLL files
+
+**pycache**/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+
+venv/
+.env/
+
+# Distribution / packaging
+
+build/
+dist/
+*.egg-info/
+
+# IDEs
+
+.vscode/
+.idea/
+todo.txt
+
+# OS files
+
+.DS_Store
+Thumbs.db
+
+# Generated JSON outputs (solutions are regenerated on demand)
+exp/results/*.json
+exp/results/**/*.json
+results/
+
+.local
+
+.localworkspace

@@ -1,0 +1,12 @@
+[project]
+name = "20252-min-max-arpd"
+version = "0.1.0"
+description = "Add your description here"
+requires-python = ">=3.14"
+dependencies = [
+    "networkx>=3.2",
+    "gurobipy>=11.0",
+    "numpy>=1.26",
+    "pandas>=2.0",
+    "scipy>=1.11",
+]

@@ -1,0 +1,661 @@
+\documentclass[a4paper,fleqn]{cas-dc}
+
+\usepackage[numbers]{natbib}
+\usepackage{graphicx}
+\usepackage{multirow}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{booktabs}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{subcaption}
+\usepackage{adjustbox}
+
+\newcommand{\fitconstraint}[1]{%
+  \begin{adjustbox}{max width=0.88\columnwidth}
+  $\displaystyle #1$
+  \end{adjustbox}%
+}
+
+\begin{document}
+\let\WriteBookmarks\relax
+\def\floatpagepagefraction{1}
+\def\textpagefraction{.001}
+
+\shorttitle{Short title}
+\shortauthors{First Author et~al.}
+
+\title[mode=title]{Full paper title}
+
+\author[1]{Full Name}%
+\fnmark[1]
+\ead{email@institution.edu}
+\credit{Author contribution statement}
+
+\affiliation[1]{organization={Department, Institution},
+                city={City},
+                country={Country}}
+
+\author[2]{Full Name}%
+\cormark[1]
+\fnmark[2]
+\ead{email@institution.edu}
+\credit{Author contribution statement}
+
+\affiliation[2]{organization={Department, Institution},
+                city={City},
+                country={Country}}
+
+\author[1]{Full Name}%
+\fnmark[1]
+\ead{email@institution.edu}
+\credit{Author contribution statement}
+
+\author[1]{Full Name}%
+\fnmark[1]
+\ead{email@institution.edu}
+\credit{Author contribution statement}
+
+\cortext[1]{Corresponding author}
+\fntext[1]{Affiliation detail for authors sharing affiliation 1.}
+\fntext[2]{Affiliation detail for corresponding author.}
+
+\begin{abstract}
+Background sentence motivating the problem domain.
+Problem statement: define the core problem addressed in this paper.
+Gap or limitation of existing approaches.
+Proposed approach: describe the methodology at a high level, listing the main stages or components.
+Experimental summary: evaluation setting and key result compared to baselines.
+Statistical validation method.
+\end{abstract}
+
+\begin{highlights}
+\item First key contribution - model or problem formulation.
+\item Second key contribution - algorithm or methodology.
+\item Third key contribution - experimental validation and results.
+\end{highlights}
+
+\begin{keywords}
+Keyword 1 \sep Keyword 2 \sep Keyword 3 \sep Keyword 4 \sep Keyword 5 \sep Keyword 6
+\end{keywords}
+
+\maketitle
+
+\section{Introduction}\label{sec:intro}
+
+Paragraph 1: Motivate the research domain. Explain why this area is important and what real-world problem it addresses.
+
+Paragraph 2: Introduce the specific problem tackled. Mention its computational complexity and prior algorithmic families used to address it.
+
+Paragraph 3: Identify the gap - what existing work does not cover.
+
+Paragraph 4: State the contributions of this paper.
+\begin{itemize}
+  \item Contribution 1: formal model or problem formulation.
+  \item Contribution 2: algorithmic pipeline or methodology.
+  \item Contribution 3: experimental study with statistical validation.
+\end{itemize}
+
+The remainder of this paper is organised as follows.
+Section~\ref{sec:related} reviews related work.
+Section~\ref{sec:problem} formally defines the problem.
+Section~\ref{sec:method} presents the proposed framework.
+Section~\ref{sec:experiments} reports experimental results.
+Section~\ref{sec:conclusion} concludes and outlines future directions.
+
+\section{Related Work}\label{sec:related}
+
+Paragraph 1: Earliest or foundational work on the problem. Cite exact methods or classical approaches and their limitations.
+
+Paragraph 2: Work addressing multi-agent or extended variants of the problem. Note how they tackled scalability or complexity.
+
+Paragraph 3: Recent bio-inspired or hybrid metaheuristic approaches. Highlight what they improved and where they still fall short.
+
+Paragraph 4: Identify the remaining open challenge that motivates this paper, explicitly naming the gap that the proposed method closes.
+
+\section{Problem Formulation}\label{sec:problem}
+
+\subsection{Preliminaries}
+
+\textbf{Operational context.}
+We consider a fleet of $P \geq 1$ trucks, each carrying one drone, departing from a shared depot to collectively service a set of required edges (e.g., roads, pipelines, or power lines) by flying over them with drones. Each truck travels to one assigned \emph{launching point}, from which its drone performs one or more flights to service a subset of the required edges. A drone flight may service either an entire required edge or only a portion of a required edge, entering and leaving the edge at suitable points; nevertheless, the union of all drone services must fully cover every required edge. Drones have limited flight autonomy $L$ and must return to their launching point after each flight. The objective is to complete all inspections while minimising the total greenhouse gas (GHG) emissions produced by both the trucks travelling to their launching points and the drones during their flights, including vertical takeoff and landing phases.
+
+\textbf{Environment model.}
+The operational environment is modelled as an undirected graph $G = (V, E)$, where $V$ is the set of vertices and $E = E_R \cup E_{NR}$ is the set of edges. The subset $E_R \subseteq E$ contains the \emph{required edges}, each corresponding to a line segment that must be serviced (flown over) by a drone. The subset $E_{NR} \subseteq E$ contains the \emph{non-required (deadheading) edges}, traversed without performing service; $E_{NR}$ induces a complete graph on $V$. For each required edge $e \in E_R$ there exists a parallel non-required edge $e' \in E'_{NR} \subset E_{NR}$ representing deadheading along the same physical segment; we denote $E''_{NR} = E_{NR} \setminus E'_{NR}$.
+
+The vertex set is $V = V_R \cup \mathcal{D}$, where $V_R$ denotes the vertices incident with required edges, and $\mathcal{D} = \{d_1, d_2, \ldots, d_D\}$ is the set of $D \geq P$ potential \emph{launching points}, including the depot vertex $0 \in \mathcal{D}$. Each truck departs from and returns to depot~$0$. When the depot itself is selected as a launching point ($z^0 = 1$), the truck travel cost is zero ($c_{00} = 0$).
+
+\textbf{Cost and emission model.}
+Let $F_t$ (g/km) denote the GHG emission factor of trucks, $F_d$ (g/km) the cruise emission factor of drones, and $F_d^{vt}$ (g/flight) the fixed GHG emission incurred once per takeoff-landing cycle (i.e., vertical takeoff plus vertical landing). Because the inspection drone carries no variable payload, its mass $m$ is constant throughout all flights; consequently $F_d$ and $F_d^{vt}$ are treated as fixed constants calibrated for the specific drone platform used.
+
+Each non-required edge $e \in E_{NR}$ carries a deadheading cost $c_e > 0$, proportional to the Euclidean distance between its endpoints:
+\begin{equation}\label{eq:distance}
+ D_{ij} = \sqrt{(x_i - x_j)^2 + (y_i - y_j)^2}.
+\end{equation}
+Each required edge $e \in E_R$ carries a \emph{service cost} $c^s_e > 0$, which represents the GHG-equivalent cruise emission incurred when a drone flies over and services that segment (i.e., $c^s_e$ subsumes both the physical traversal and the sensor-operation overhead). We assume $c^s_e \geq c_{e'}$ for each parallel pair $(e, e')$, reflecting the additional cost of active sensing. Deadheading costs satisfy the triangle inequality. The truck travel cost from depot $0$ to launching point $d$ is $c_{0d} \geq 0$.
+
+The truck emission for a round-trip to launching point $d$ is:
+\begin{equation}\label{eq:truck_emission}
+ E^{\mathrm{truck}}_d = F_t \cdot 2\,c_{0d}.
+\end{equation}
+
+The drone emission for flight $k$ from launching point $d$ now accounts for three phases-vertical takeoff, horizontal cruise, and vertical landing:
+\begin{equation}\label{eq:drone_emission}
+ E^{\mathrm{drone}}_{dk} =
+ \underbrace{2\,F_d^{vt} \cdot u^{dk}}_{\text{takeoff + landing}}
+ + \underbrace{F_d \!\left(
+   \sum_{e \in E_R} c^s_e\, x^{dk}_e
+   + \sum_{e \in E_{NR}} c_e \bigl(x^{dk}_e + y^{dk}_e\bigr)
+ \right)}_{\text{cruise}},
+\end{equation}
+where $u^{dk} \in \{0,1\}$ equals $1$ if flight $(d,k)$ is active (the drone departs and returns once), and $0$ if unused. The factor $2$ reflects one takeoff and one landing per active flight. The second term accumulates cruise emissions over all required edges serviced and non-required edges deadheaded in that flight.
+
+\textbf{Remark (NP-hardness).}
+Even the single-truck, single-drone version of our problem contains the Capacitated Arc Routing Problem (CARP) as a special case, which is NP-hard~\cite{golden1981}. Hence the full problem is NP-hard, motivating the metaheuristic approach in Section~\ref{sec:method} combined with exact lower bounds.
+
+\subsection{Mathematical Model}
+
+\textbf{Input:}
+\begin{itemize}
+ \item $G = (V,\, E_R \cup E_{NR})$: undirected inspection network.
+ \item $\mathcal{D} = \{d_1, \ldots, d_D\}$: set of $D \geq P$ potential launching points, including depot $0 \in \mathcal{D}$.
+ \item $P \geq 1$: number of available truck-drone pairs.
+ \item $\mathcal{K} = \{1, \ldots, K\}$: flight-index set; $K$ is the maximum number of flights per drone.
+ \item $L > 0$: maximum emission cost (range) of a single drone flight, including takeoff, cruise, and landing.
+ \item $c^s_e > 0$: cruise service cost of required edge $e \in E_R$.
+ \item $c_e > 0$: deadheading cost of non-required edge $e \in E_{NR}$.
+ \item $c_{0d} \geq 0$: one-way truck travel cost from depot $0$ to launching point $d$.
+ \item $F_t \geq 0$: truck GHG emission factor (g/km).
+ \item $F_d \geq 0$: drone cruise GHG emission factor (g/km).
+ \item $F_d^{vt} \geq 0$: drone vertical takeoff/landing GHG emission factor (g/flight).
+\end{itemize}
+
+\textbf{Decision variables:}
+\begin{itemize}
+ \item $x^{dk}_e \in \{0,1\}$: equals $1$ if edge $e \in E_R \cup E_{NR}$ is traversed \emph{at least once} by drone flight $(d,k)$; $0$ otherwise. For $e \in E_R$ this also records that $e$ is serviced in that flight. 
+\item $y^{dk}_e \in \{0,1\}$: equals $1$ if non-required edge $e \in E_{NR}$ is traversed a \emph{second} time by drone flight $(d,k)$; $0$ otherwise. 
+\item $z^d \in \{0,1\}$: equals $1$ if launching point $d \in \mathcal{D}$ is active (assigned to a truck); $0$ otherwise. 
+\item $u^{dk} \in \{0,1\}$: equals $1$ if flight $(d,k)$ is active (drone performs exactly one takeoff-landing cycle); $0$ if unused.
+\end{itemize}
+
+\textbf{Output:}
+An assignment of at most $P$ launching points from $\mathcal{D}$ and, for each active launching point $d$, at most $K$ drone flights-each a closed walk starting and ending at $d$ with total emission cost (including takeoff and landing) at most $L$-jointly servicing all required edges in $E_R$, minimising total GHG emissions.
+
+\textbf{Objective function:}
+\begin{equation}\label{eq:objective}
+\resizebox{0.98\columnwidth}{!}{$\displaystyle
+ \min\; E =
+ \sum_{d \in \mathcal{D}} \left(
+   F_t \, 2c_{0d}\, z^d
+   + \sum_{k \in \mathcal{K}} \left(
+     2\,F_d^{vt}\, u^{dk}
+     + F_d \left(
+       \sum_{e \in E_R} c^s_e\, x^{dk}_e
+       + \sum_{e \in E_{NR}} c_e \bigl(x^{dk}_e + y^{dk}_e\bigr)
+     \right)
+   \right)
+ \right)
+$}
+\end{equation}
+
+\textbf{Constraints:}
+\begin{subequations}\label{eq:constraints}
+\begin{align}
+&\fitconstraint{
+\sum_{e \in \delta(v)} \bigl(x^{dk}_e + y^{dk}_e\bigr) \equiv 0 \pmod{2},
+\quad \forall\, d \in \mathcal{D},\; k \in \mathcal{K},\; v \in V
+}
+\label{con:parity} \\[4pt]
+%
+&\fitconstraint{
+\sum_{e \in \delta(d)} \bigl(x^{dk}_e + y^{dk}_e\bigr) = 2\,u^{dk},
+\quad \forall\, d \in \mathcal{D},\; k \in \mathcal{K}
+}
+\label{con:flow_d} \\[4pt]
+%
+&\fitconstraint{
+\sum_{e \in \delta(S)} \bigl(x^{dk}_e + y^{dk}_e\bigr) \geq 2\,x^{dk}_f,
+\quad \forall\, S \subseteq V \setminus \{d\},\; f \in E(S),\; 
+d \in \mathcal{D},\; k \in \mathcal{K}
+}
+\label{con:connectivity} \\[4pt]
+%
+&\fitconstraint{
+\sum_{d \in \mathcal{D}} \sum_{k \in \mathcal{K}} x^{dk}_e \geq 1,
+\quad \forall\, e \in E_R
+}
+\label{con:coverage} \\[4pt]
+%
+&\fitconstraint{
+x^{dk}_e \geq y^{dk}_e,
+\quad \forall\, e \in E_{NR},\; d \in \mathcal{D},\; k \in \mathcal{K}
+}
+\label{con:second_traversal} \\[4pt]
+%
+&\fitconstraint{
+2\,F_d^{vt}\,u^{dk} + \sum_{e \in E_R} c^s_e\, x^{dk}_e
++ \sum_{e \in E_{NR}} c_e\bigl(x^{dk}_e + y^{dk}_e\bigr)
+\leq L\,z^d,
+\quad \forall\, d \in \mathcal{D},\; k \in \mathcal{K}
+}
+\label{con:range} \\[4pt]
+%
+&\fitconstraint{
+x^{dk}_e \leq u^{dk},
+\quad \forall\, e \in E_R \cup E_{NR},\; d \in \mathcal{D},\; k \in \mathcal{K}
+}
+\label{con:link_x_u} \\[4pt]
+%
+&\fitconstraint{
+u^{dk} \leq z^d,
+\quad \forall\, d \in \mathcal{D},\; k \in \mathcal{K}
+}
+\label{con:link_u_z} \\[4pt]
+%
+&\fitconstraint{
+\sum_{k \in \mathcal{K}} u^{dk} \leq K\,z^d,
+\quad \forall\, d \in \mathcal{D}
+}
+\label{con:max_flights} \\[4pt]
+%
+&\fitconstraint{
+\sum_{d \in \mathcal{D}} z^d \leq P
+}
+\label{con:trucks} \\[4pt]
+%
+&\fitconstraint{
+x^{dk}_e \in \{0,1\},\quad
+y^{dk}_e \in \{0,1\},\quad
+z^d \in \{0,1\},\quad
+u^{dk} \in \{0,1\}
+}
+\label{con:binary}
+\end{align}
+\end{subequations}
+
+Here $\delta(v)$ denotes the set of edges incident to vertex $v$, $\delta(S)$ is the \emph{cut-set} of $S$-the set of edges with exactly one endpoint in $S \subseteq V$-and $E(S)$ is the set of edges with both endpoints in $S$.
+
+Parity~\eqref{con:parity} ensures every vertex has even degree in each flight, a necessary condition for an Eulerian closed walk. Flow conservation~\eqref{con:flow_d} fixes the degree of launching point $d$ to $2u^{dk}$, guaranteeing the walk departs and returns exactly once when $u^{dk}=1$. Constraint~\eqref{con:connectivity} eliminates subtours via cut-set inequalities. Constraint~\eqref{con:coverage} requires every required edge to be serviced by at least one flight. Constraint~\eqref{con:second_traversal} permits a second traversal of a non-required edge only if it has already been traversed once. Constraint~\eqref{con:range} enforces the drone range limit $L$, now including the fixed takeoff-landing emission $2F_d^{vt}u^{dk}$, and forces all flights at an inactive launching point to be empty. Constraints~\eqref{con:link_x_u}-\eqref{con:link_u_z} together ensure that edge traversal variables are non-zero only for active flights at active launching points. Constraint~\eqref{con:max_flights} bounds the number of active flights per launching point to $K$. Constraint~\eqref{con:trucks} limits active launching points to $P$. Finally,~\eqref{con:binary} enforces integrality; note that $u^{dk}$ is now restricted to $\{0,1\}$ since each flight performs at most one takeoff-landing cycle.
+
+\section{Proposed Methodology}\label{sec:method}
+
+\subsection{Overall Framework}\label{sec:workflow}
+
+The proposed methodology, termed \textbf{LCB-IMMA} (\underline{L}inear \underline{C}ontextual \underline{B}andit \underline{I}sland-\underline{M}odel \underline{M}emetic \underline{A}lgorithm), solves the minimum GHG emission arc routing problem with trucks and drones through a four-stage pipeline (Figure~\ref{fig:framework}).
+
+\begin{itemize}
+\item \textit{Stage~1 – Lazy GRP Lower Bound Cache:} Lower bounds $\mathrm{grp}_d(F)$ on the optimal drone-tour emission cost for servicing edge subset $F \subseteq E_R$ from launching point $d$ are computed on demand via the Generalized Rural Postman Problem (GRP) branch-and-cut algorithm of~\cite{corbera2007} and cached by key $(d, F)$. 
+\item \textit{Stage~2 – Emission-Guided Population Initialisation:} A diverse initial population is constructed via a nearest-neighbour heuristic weighted by GHG emission, split into feasible flights, and distributed evenly across four islands. 
+\item \textit{Stage~3 – LCB-IMMA Search:} Four islands evolve concurrently, each with a distinct local search operator. A two-stage LinUCB bandit controller adaptively selects migration actions at stagnation-driven epochs.
+ \item \textit{Stage~4 – Solution Return:} After the wall-clock budget expires, the best individual found across all islands is returned. Any segment-level infeasibilities have already been handled during migration (Stage~3); the final objective value is the total GHG emission~\eqref{eq:objective}.
+\end{itemize}
+
+\subsection{Framework Algorithms}\label{sec:algorithms}
+
+\subsubsection{Stage~1: Lazy GRP Lower Bound Cache}\label{sec:alg1}
+
+For each queried pair $(d, F)$, the bound $\mathrm{grp}_d(F)$ is computed by the GRP branch-and-cut of~\cite{corbera2007} and stored in hash map $\mathcal{C}$. Bounds serve two purposes: (i) immediate infeasibility detection ($\mathrm{grp}_d(F) > L$), and (ii) lower-bound cost estimates used during solution construction and local search (the LinUCB reward is computed from actual solution objectives, not from these bounds directly).
+
+\textbf{Cache complexity note.} The number of distinct $(d, F)$ pairs arising during search can grow exponentially with $|E_R|$ in the worst case. In practice, the cache remains tractable because search explores a small neighbourhood of the incumbent solution; however, on large instances ($|E_R| \gg 50$), the GRP solver may become a bottleneck and its calls should be rate-limited or replaced by a fast approximation.
+
+\subsubsection{Stage~2: Emission-Guided Population Initialisation}\label{sec:alg2}
+
+$P$ launching points are sampled from $\mathcal{D}$ with probability:
+\begin{equation}\label{eq:lp_prob}
+ p_d \propto \frac{1}{F_t \cdot 2 c_{0d} + \epsilon}, \quad d \in \mathcal{D},
+\end{equation}
+where $\epsilon > 0$ handles $c_{0d} = 0$ (depot). Each required edge is assigned to an active launching point with probability inversely proportional to the one-way deadheading cost from that point to the nearest edge endpoint. A giant tour per launching point is built by the Nearest Neighbour heuristic using GHG emission weights and split into flights of cost at most $L$ by greedy forward scanning. Duplicates are discarded; the resulting $N_{\mathrm{pop}}$ individuals are distributed evenly across the four islands.
+
+\subsubsection{Stage~3: LCB-IMMA}\label{sec:alg3}
+
+\textbf{Island structure.}
+LCB-IMMA maintains four islands, each with subpopulation $N_{\mathrm{isl}} = N_{\mathrm{pop}} / 4$. Wall-clock budgets are equalised across islands.
+
+\begin{itemize}
+ \item $I_1$ – Variable Neighbourhood Descent (VND) with four nested neighbourhoods (strong intensification).
+ \item $I_2$ – Iterated Local Search (ILS) with emission-guided ruin-and-recreate (diversification).
+ \item $I_3$ – DP-based flight optimiser on the highest-emission launching point.
+ \item $I_4$ – Greedy repair targeting the highest per-km emission edge.
+\end{itemize}
+
+\textbf{Solution encoding and fitness.}
+Each individual $\mathcal{S}$ encodes flight blocks as:
+\begin{equation}\label{eq:encoding}
+\mathcal{S} = \Bigl[
+ \underbrace{\pi^{d_1}_1,\dots,\pi^{d_1}_{k_1}}_{\text{Point }d_1},\;\dots,\;
+ \underbrace{\pi^{d_P}_1,\dots,\pi^{d_P}_{k_P}}_{\text{Point }d_P}
+\Bigr],
+\end{equation}
+where $\pi^d_k$ is the ordered sequence of required edges in flight $k$ from launching point $d$, with $k_d \leq K$ for all $d$. Route costs are computed via cached GRP bounds.
+
+\textbf{Repair procedure.}
+If a flight $\pi^d_k$ violates the range constraint ($\mathrm{grp}_d(\pi^d_k) > L$), the last edge is relocated: it is appended to the next available flight at $d$ that remains feasible (checked via the GRP cache), or inserted at the nearest feasible launching point $d'$, or placed in a new flight if $k_d < K$. This repair always produces a feasible individual under the following sufficient condition: (a) each single required edge satisfies $c^s_e \leq L$ (necessary input condition), and (b) the total number of required edges across all active launching points does not exceed $P \cdot K$ (i.e., enough flight slots exist). If neither alternative is available—which indicates a structurally infeasible instance—the individual is flagged as infeasible and penalised in evaluation.
+
+The fitness is the total GHG emission~\eqref{eq:objective}, decoded from the encoding.
+
+\textbf{Diversity measure.}
+Diversity is approximated by the normalised average pairwise Hamming distance on edge-to-flight assignments among the four best-of-island solutions:
+\begin{equation}\label{eq:diversity}
+\mathrm{div} = \frac{1}{\binom{4}{2}\,|E_R|} \sum_{i < j} \mathrm{H}(\mathcal{S}^*_i, \mathcal{S}^*_j) \;\in [0,1],
+\end{equation}
+where $\mathrm{H}(\mathcal{S}_i, \mathcal{S}_j)$ counts required edges assigned to different (launching-point, flight-index) pairs. Division by $|E_R|$ normalises the result to $[0,1]$, which is required so that $\mathrm{div}$ contributes on a comparable scale to the other context-vector features. This costs $O(|E_R|)$ per epoch. We note that solutions with identical assignments but different intra-flight edge orderings are treated as identical by this measure; a finer diversity metric incorporating tour structure may be considered in future work.
+
+\textbf{Two-stage LinUCB controller.}
+We employ a two-stage LinUCB design to balance exploration and exploitation of migration strategies:
+\begin{itemize}
+ \item \textbf{Stage~1:} Bandit $\mathcal{B}_1$ with 4 arms selects source island $I_{i^*}$.
+ \item \textbf{Stage~2:} Bandit $\mathcal{B}_2^{(i^*)}$ with 9 arms (3 destination islands $\times$ 3 granularity levels) selects destination $I_{j^*}$ and granularity $g^* \in \{g_1, g_2, g_3\}$.
+\end{itemize}
+This hierarchical decomposition reduces the parameter count per decision from 36 (flat bandit) to at most 13 ($4 + 9$), accelerating convergence of the ridge-regression weight estimates.
+
+\textbf{Context vector.}
+The shared context vector $\phi(s) \in \mathbb{R}^7$ at migration epoch $\tau$ is:
+\begin{equation}\label{eq:context}
+\phi(s) = \Bigl[
+ \mathrm{div},\;
+ \overline{f}_{\mathrm{isl}},\;
+ \Delta^{\mathrm{rel}}_\tau,\;
+ \mathrm{stag} / \delta_{\mathrm{stag}},\;
+ \min\!\bigl(\tau / (50\,\tau_{\mathrm{base}}),\,1\bigr),\;
+ T_\tau / T_0,\;
+ 1
+\Bigr]^\top,
+\end{equation}
+where $\mathrm{div}$ is the normalised diversity measure~\eqref{eq:diversity}; $\overline{f}_{\mathrm{isl}}$ is the mean of the best-of-island fitness values, normalised by the initial population mean $\bar{f}_0$ (a fixed constant computed at initialisation); $\Delta^{\mathrm{rel}}_\tau = (f^*_{\mathrm{prev}} - f^*_\tau) / f^*_{\mathrm{prev}}$ is the relative improvement in global best since the previous migration epoch (where $f^*_{\mathrm{prev}}$ is the global best at the last migration trigger, capturing stagnation depth over the inter-migration interval); $\mathrm{stag}$ is the current stagnation counter; the fifth feature min$(\tau/(50\,\tau_{\mathrm{base}}),\,1)$ is a clamped normalised epoch counter; $T_\tau = T_0 \rho^\tau$ is the annealing temperature; and the final entry $1$ is the bias term.
+
+\textbf{Arm selection (LinUCB).}
+\begin{align}
+ i^* &= \arg\max_{i \in \{1,2,3,4\}} \Bigl[
+ \hat{\theta}^{(1)\top}_i \phi(s)
+ + \alpha \sqrt{\phi(s)^\top (A^{(1)}_i)^{-1} \phi(s)}
+ \Bigr], \label{eq:linucb1} \\
+ (j^*, g^*) &= \arg\max_{\substack{j \in \{1,2,3,4\} \setminus \{i^*\},\\
+    g \in \{g_1,g_2,g_3\}}} \Bigl[
+ \hat{\theta}^{(2)\top}_{(j,g)} \phi(s)
+ + \alpha \sqrt{\phi(s)^\top (A^{(2)}_{(j,g)})^{-1} \phi(s)}
+ \Bigr], \label{eq:linucb2}
+\end{align}
+where $\alpha > 0$ is the exploration coefficient, $A^{(1)}_i, A^{(2)}_{(j,g)} \in \mathbb{R}^{7 \times 7}$ are regularised Gram matrices (initialised to $I_7$), and $\hat\theta$ are ridge-regression weight vectors.
+
+\textbf{Emission-migration filter and annealing threshold.}
+Each candidate segment $\pi$ from the source island is scored by:
+\begin{equation}\label{eq:filter}
+ \mathrm{mv}(\pi) = \frac{f_{\mathrm{avg}}(I_{i^*}) - f(\pi)}{f_{\mathrm{avg}}(I_{i^*})},
+\end{equation}
+where $f(\pi)$ is the segment's approximate GHG cruise cost (computed as the open-path deadheading cost traversing the segment's required edges sequentially from the segment's launch vertex), and $f_{\mathrm{avg}}(I_{i^*})$ is the source island's mean fitness. Segments with $\mathrm{mv}(\pi) < \theta_{\mathrm{mv}}(\tau)$ are discarded, where:
+\begin{equation}\label{eq:threshold}
+ \theta_{\mathrm{mv}}(\tau) = \theta_1 + (\theta_0 - \theta_1)\,\rho^\tau, \quad
+ \theta_0 > \theta_1 \geq 0.
+\end{equation}
+
+\textbf{Reward and LinUCB update.}
+After migration, the reward signal is:
+\begin{equation}\label{eq:reward}
+ r_\tau = \begin{cases}
+ \dfrac{f_{\mathrm{before}} - f_{\mathrm{after}}}{f_{\mathrm{before}}} & \text{if migration yields a feasible individual,} \\[6pt]
+ -\lambda & \text{otherwise,}
+ \end{cases}
+\end{equation}
+where $f_{\mathrm{before}}$ and $f_{\mathrm{after}}$ are the best fitness of $I_{j^*}$ before and after migration, and $\lambda > 0$ penalises infeasibility. Note that a migration that does not improve the island best still receives a non-negative reward if it improves diversity (reflected indirectly through a subsequent improvement captured in the next epoch's $\Delta^{\mathrm{rel}}_\tau$); a fully greedy reward is a known limitation of the current design.
+
+Both bandits are updated via ridge regression:
+\begin{equation}\label{eq:linucb_update}
+ A_a \leftarrow A_a + \phi(s)\phi(s)^\top, \quad b_a \leftarrow b_a + r_\tau\,\phi(s), \quad \hat\theta_a \leftarrow A_a^{-1} b_a,
+\end{equation}
+for $a = i^*$ (bandit $\mathcal{B}_1$) and $a = (j^*, g^*)$ (bandit $\mathcal{B}_2^{(i^*)}$).
+
+\textbf{Metropolis acceptance.}
+\begin{equation}\label{eq:metropolis}
+ \Pr[\text{accept}] = \exp\!\left(-\frac{f(\pi) - \bar{f}_{I_{j^*}}}{T_\tau} \right),
+\end{equation}
+where $\bar{f}_{I_{j^*}}$ is the destination island's mean fitness and $T_\tau = T_0 \rho^\tau$.
+
+\textbf{Full algorithm.}
+The complete procedure is given in Algorithm~\ref{alg:lcbimma}.
+
+\begin{algorithm}[t]
+\caption{LCB-IMMA (Linear Contextual Bandit Island-Model Memetic Algorithm)}
+\label{alg:lcbimma}
+\begin{algorithmic}[1]
+\Require $G$, $P$, $K$, $L$, $F_t$, $F_d$, $F_d^{vt}$, $N_{\mathrm{pop}}$, time budget $T_{\mathrm{wall}}$,
+  $\tau_{\mathrm{base}}$, $\delta_{\mathrm{stag}}$, $\alpha$, $\lambda$,
+  $\theta_0$, $\theta_1$, $T_0$, $\rho$, $\epsilon$, $n_{\mathrm{ILS}}$
+\Ensure Best feasible solution $\mathcal{S}^*$
+\State $\mathcal{C} \gets \emptyset$ \Comment{Stage~1: lazy GRP cache}
+\State $\{\mathcal{P}_i\}_{i=1}^{4} \gets \mathrm{InitPopulation}(N_{\mathrm{pop}}, \text{Eq.~\eqref{eq:lp_prob}})$ \Comment{Stage~2}
+\State $\bar{f}_0 \gets $ mean fitness of initial population \Comment{fixed normaliser}
+\State Initialise $\mathcal{B}_1$ and $\{\mathcal{B}_2^{(i)}\}_{i=1}^4$: $A_a \gets I_7$, $b_a \gets \mathbf{0}$, $\hat\theta_a \gets \mathbf{0}$
+\State $\mathcal{S}^* \gets \arg\min_{\mathcal{S}} f(\mathcal{S})$;\quad $f^* \gets f(\mathcal{S}^*)$;\quad $\mathrm{stag} \gets 0$;\quad $\tau \gets 0$
+\While{wall-clock time $< T_{\mathrm{wall}}$} \Comment{Stage~3}
+ \State $\tau \gets \tau + 1$
+ \For{each island $I_i$ \textbf{(equal wall-clock budget per epoch)}}
+ \State $\mathcal{P}_i \gets \mathrm{LocalSearch}_i(\mathcal{P}_i)$
+  \Comment{VND / ILS($n_{\mathrm{ILS}}$) / DP / Greedy}
+ \State $\mathcal{P}_i \gets \mathrm{EmissionCrossover}(\mathcal{P}_i)$
+ \State $\mathcal{P}_i \gets \mathrm{Mutate}(\mathcal{P}_i)$
+ \State $\mathcal{P}_i \gets \mathrm{SortByFitness}(\mathcal{P}_i)$
+  \Comment{rank-order; full pop retained — elitism via selection pressure}
+ \EndFor
+ \If{$\min_i f(\mathrm{best}(\mathcal{P}_i)) < f^*$}
+ \State $\mathcal{S}^* \gets \arg\min_i \mathrm{best}(\mathcal{P}_i)$;\quad $f^* \gets f(\mathcal{S}^*)$;\quad $\mathrm{stag} \gets 0$
+ \Else
+ \State $\mathrm{stag} \gets \mathrm{stag} + 1$
+ \EndIf
+ \If{$\mathrm{stag} \geq \delta_{\mathrm{stag}}$ \textbf{or} $\tau \bmod \tau_{\mathrm{base}} = 0$}
+ \State Compute $\phi(s)$ via Eq.~\eqref{eq:context}
+ \State $i^* \gets \mathcal{B}_1$ arm via Eq.~\eqref{eq:linucb1}
+ \State $(j^*, g^*) \gets \mathcal{B}_2^{(i^*)}$ arm via Eq.~\eqref{eq:linucb2}
+ \State $f_{\mathrm{before}} \gets f(\mathrm{best}(\mathcal{P}_{j^*}))$
+ \State Extract segments from $I_{i^*}$ at granularity $g^*$
+ \State Filter via Eqs.~\eqref{eq:filter}-\eqref{eq:threshold}
+ \For{each accepted segment $\pi$}
+  \State Repair $\pi$ (Sec.~\ref{sec:alg3}); evaluate $f(\pi)$
+  \If{$f(\pi) < f(\mathrm{best}(\mathcal{P}_{j^*}))$ \textbf{and}
+  $f(\pi) < \bar{f}_{I_{j^*}}$}
+  \State Replace worst individual in $I_{j^*}$ with $\pi$
+  \ElsIf{$\mathrm{Uniform}(0,1) <
+   \exp(-(f(\pi){-}\bar{f}_{I_{j^*}})/T_\tau)$}
+  \Comment{Eq.~\eqref{eq:metropolis}}
+  \State Replace a random individual in $I_{j^*}$ with $\pi$
+  \EndIf
+ \EndFor
+ \State $f_{\mathrm{after}} \gets f(\mathrm{best}(\mathcal{P}_{j^*}))$
+ \State $r_\tau \gets$ reward via Eq.~\eqref{eq:reward}
+ \State Update $\mathcal{B}_1$ arm $i^*$ and $\mathcal{B}_2^{(i^*)}$ arm $(j^*, g^*)$ via Eq.~\eqref{eq:linucb_update}
+ \State $T_\tau \gets T_0 \rho^\tau$;\quad $\mathrm{stag} \gets 0$
+ \EndIf
+\EndWhile
+\State \Return $\mathcal{S}^*$ \Comment{Stage~4}
+\end{algorithmic}
+\end{algorithm}
+
+\textbf{Complexity.}
+Local search dominates runtime. Diversity computation~\eqref{eq:diversity} costs $O(|E_R|)$ per epoch; LinUCB update and arm selection each cost $O(m^2)$ with $m = 7$, negligible relative to local search. GRP branch-and-cut calls are exact and cached ($O(1)$ on cache hit); uncached calls can be expensive for large $|E_R|$, and we recommend rate-limiting GRP invocations or substituting a fast lower-bound approximation when $|E_R| > 50$.
+
+
+\section{Experimental Results and Evaluation}\label{sec:experiments}
+
+\subsection{Experimental Setup}
+
+Describe implementation language, hardware specification (CPU, RAM, OS), and instance generation procedure. Instances are classified by scale: small, medium, and large. Table~\ref{tab:params_instances} summarises the instance parameters. All hyper-parameters were determined through a systematic grid search. Algorithm configurations are reported in Table~\ref{tab:params_alg}.
+
+\begin{table}[width=\linewidth,cols=3,pos=htbp]
+\centering
+\caption{Experimental instance parameters}\label{tab:params_instances}
+\begin{tabular*}{\tblwidth}{@{}LLL@{}}
+\toprule
+Parameter & Range / Value & Description \\
+\midrule
+Param 1 & range & description \\
+Param 2 & range & description \\
+Param 3 & value & description \\
+Param 4 & range & description \\
+Param 5 & range & description \\
+\bottomrule
+\end{tabular*}
+\end{table}
+
+\begin{table}[width=\linewidth,cols=5,pos=htbp]
+\centering
+\caption{Algorithm parameters}\label{tab:params_alg}
+\begin{tabular*}{\tblwidth}{@{}LLCLC@{}}
+\toprule
+\textbf{Algorithm} & \textbf{Parameter} & \textbf{Value} & \textbf{Parameter} & \textbf{Value} \\
+\midrule
+\multirow{3}{*}{Baseline 1}
+    & param & val & param & val \\
+    & param & val & param & val \\
+    & param & val &       &     \\
+\midrule
+\multirow{3}{*}{Baseline 2}
+    & param & val & param & val \\
+    & param & val & param & val \\
+    & param & val &       &     \\
+\midrule
+\multirow{2}{*}{Baseline 3}
+    & param & val & param & val \\
+    & param & val & param & val \\
+\midrule
+\multirow{3}{*}{Proposed}
+    & param & val & param & val \\
+    & param & val & param & val \\
+    & param & val &       &     \\
+\midrule
+\multirow{2}{*}{Constraints}
+    & param & val & param & val \\
+    & param & val &       &     \\
+\bottomrule
+\end{tabular*}
+\end{table}
+
+\subsection{Evaluation Results}
+
+\textit{Experiment~1: Parameter tuning.}
+Describe the grid search: which parameters were varied, what ranges were used, and how the best configuration was selected.
+
+\textit{Experiment~2: Convergence by number of iterations.}
+Describe the convergence comparison across algorithms as shown in Figure~\ref{fig:convergence_gen}. State what the proposed method achieves faster or better than baselines.
+
+\begin{figure}[htbp]
+\centering
+\begin{subfigure}[b]{0.48\columnwidth}
+    \includegraphics[width=\linewidth]{path/to/figure_gen.png}
+    \caption{Metric comparison by iteration}
+    \label{fig:convergence_gen}
+\end{subfigure}
+\hfill
+\begin{subfigure}[b]{0.48\columnwidth}
+    \includegraphics[width=\linewidth]{path/to/figure_time.png}
+    \caption{Metric comparison by runtime}
+    \label{fig:convergence_time}
+\end{subfigure}
+\caption{Convergence comparison: instance description.}\label{fig:convergence}
+\end{figure}
+
+\textit{Experiment~3: Convergence by wall-clock time.}
+Compare practical runtime of all algorithms. Note which is fastest and which requires the most time, and justify the trade-off for the proposed method as shown in Figure~\ref{fig:convergence_time}.
+
+\textit{Experiment~4: Solution quality comparison.}
+Compare the proposed method against baselines across all instances as shown in Figure~\ref{fig:all_results}. State win rate or improvement percentage.
+
+\begin{figure*}[htbp]
+\centering
+\begin{subfigure}[b]{0.23\textwidth}
+    \includegraphics[width=\linewidth]{path/to/overall.png}
+    \caption{Overall comparison}
+\end{subfigure}
+\hfill
+\begin{subfigure}[b]{0.23\textwidth}
+    \includegraphics[width=\linewidth]{path/to/runtime.png}
+    \caption{Avg.\ runtime}
+\end{subfigure}
+\hfill
+\begin{subfigure}[b]{0.23\textwidth}
+    \includegraphics[width=\linewidth]{path/to/metric.png}
+    \caption{Avg.\ metric}
+\end{subfigure}
+\hfill
+\begin{subfigure}[b]{0.23\textwidth}
+    \includegraphics[width=\linewidth]{path/to/by_variant.png}
+    \caption{By variant}
+\end{subfigure}
+\caption{Performance evaluation results across all metrics.}
+\label{fig:all_results}
+\end{figure*}
+
+\textit{Impact of variant or scenario.}
+Discuss performance per variant as shown in Table~\ref{tab:combined}. Highlight where the proposed method has the largest or most consistent advantage.
+
+\begin{table}[width=\linewidth,cols=4,pos=htbp]
+\centering
+
+\begin{subtable}[t]{0.48\linewidth}
+\centering
+\small
+\begin{tabular}{lccc}
+\toprule
+Variant & Baseline 1 & Baseline 2 & \textbf{Proposed} \\
+\midrule
+Variant A & val & val & \textbf{val} \\
+Variant B & val & val & \textbf{val} \\
+Variant C & val & val & \textbf{val} \\
+Variant D & val & val & \textbf{val} \\
+\bottomrule
+\end{tabular}
+\caption{Metric comparison by variant}
+\label{tab:variant_results}
+\end{subtable}
+\hfill
+\begin{subtable}[t]{0.48\linewidth}
+\centering
+\small
+\begin{tabular}{lcc}
+\toprule
+Pairwise comparison & $p$-value & Sig. \\
+\midrule
+Proposed vs.\ Baseline 1 & val & Yes \\
+Proposed vs.\ Baseline 2 & val & Yes \\
+Proposed vs.\ Baseline 3 & val & Yes \\
+\bottomrule
+\end{tabular}
+\caption{Statistical significance analysis}
+\label{tab:stat}
+\end{subtable}
+
+\caption{Metric comparison by variant and statistical analysis}
+\label{tab:combined}
+\end{table}
+
+\textit{Statistical analysis.}
+Report Friedman test statistic and $p$-value. Summarise pairwise Wilcoxon results from Table~\ref{tab:stat}.
+
+\textit{Discussion.}
+Explain why the proposed method works better: what each component contributes, how the synergy between components helps avoid local optima or improves efficiency. Quantify the practical benefit.
+
+\section{Conclusion}\label{sec:conclusion}
+
+Summarise the paper: restate the problem, the proposed pipeline with its stages, and the key experimental finding. State a current limitation of the work. State the future work direction.
+
+\printcredits
+
+\bibliographystyle{cas-model2-names}
+
+\begin{thebibliography}{99}
+
+\bibitem[Author1 et~al.(Year)]{key1}
+Author1, A., Author2, B., \& Author3, C. (Year).
+Title of paper.
+\textit{Journal Name}, Vol(Issue), pages.
+
+\bibitem[Author2 and Author3(Year)]{key2}
+Author2, D., \& Author3, E. (Year).
+Title of paper.
+\textit{Journal Name}, Vol, article number.
+
+\bibitem[Author4 et~al.(Year)]{key3}
+Author4, F., Author5, G., \& Author6, H. (Year).
+Title of paper.
+\textit{Journal Name}, Vol(Issue), pages.
+
+\end{thebibliography}
+
+\end{document}

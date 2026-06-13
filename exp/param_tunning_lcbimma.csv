@@ -1,0 +1,11 @@
+No,Parameter Name,Meaning (Vietnamese),Symbol (LaTeX),kwarg_key,Domain,Current Value,Test Values,Default for others
+1,LinUCB exploration coefficient,Hệ số khám phá (exploration) của bộ điều khiển LinUCB hai tầng,$\alpha$,alpha,"(0, inf)",1.0,[0.5;1.0;2.0],1.0
+2,Total population size,Kích thước quần thể tổng chia đều cho 4 đảo ($N_{\rm isl} = N_{\rm pop}/4$),$N_{\rm pop}$,n_pop,"[8, inf)",40,[20;40;60],40
+3,Periodic migration interval,Số epoch giữa hai lần di cư định kỳ (migration epoch),$\tau_{\rm base}$,tau_base,"[1, inf)",10,[5;10;20],10
+4,Stagnation window,Số epoch liên tiếp không cải thiện để kích hoạt di cư,$\delta_{\rm stag}$,delta_stag,"[1, inf)",20,[10;20;30],20
+5,Infeasible migration penalty,Hệ số phạt phần thưởng khi di cư cho ra cá thể không khả thi,$\lambda$,lambda_pen,"(0, inf)",0.1,[0.05;0.10;0.20],0.1
+6,Initial migration-filter threshold,Ngưỡng lọc di cư mv(pi) ở epoch đầu tiên (tau=0),$\theta_0$,theta_0,"(theta_1, 1]",0.5,[0.3;0.5;0.7],0.5
+7,Final migration-filter threshold,Ngưỡng lọc di cư mv(pi) khi epoch tiến đến vô cùng (sàn dưới),$\theta_1$,theta_1,"[0, theta_0)",0.0,[0.0;0.1;0.2],0.0
+8,Initial Metropolis temperature,Nhiệt độ chấp nhận Metropolis ở bước đầu tiên,$T_0$,T_0,"(0, inf)",1.0,[0.5;1.0;2.0],1.0
+9,Geometric decay rate,Hệ số giảm hình học áp dụng cho nhiệt độ Metropolis và ngưỡng lọc di cư,$\rho$,rho,"(0, 1)",0.99,[0.95;0.99;0.999],0.99
+10,ILS inner iterations,Số lần lặp ruin-and-recreate bên trong ILS cho đảo $I_2$,$n_{\rm ILS}$,ils_iter,"[1, inf)",10,[5;10;20],10
