@@ -41,6 +41,12 @@ class BenchmarkRow:
     Total_GHG: float
     Time: float
     Flight_Optimizer: str
+    Convergence_Iterations: str
+    Convergence_Count: int
+    Convergence_First_Objective: str
+    Convergence_Final_Objective: str
+    Convergence_Improvement: str
+    Convergence_Improvement_Percent: str
 
     def as_csv_row(self) -> dict:
         return {
@@ -57,6 +63,12 @@ class BenchmarkRow:
             "Total GHG": _format_number(self.Total_GHG),
             "Time": _format_number(self.Time),
             "Flight Optimizer": self.Flight_Optimizer,
+            "Convergence Iterations": self.Convergence_Iterations,
+            "Convergence Count": self.Convergence_Count,
+            "Convergence First Objective": self.Convergence_First_Objective,
+            "Convergence Final Objective": self.Convergence_Final_Objective,
+            "Convergence Improvement": self.Convergence_Improvement,
+            "Convergence Improvement Percent": self.Convergence_Improvement_Percent,
         }
 
 
@@ -145,6 +157,133 @@ def build_instance(instance_file: Path, num_trucks: int, flight_limit: Optional[
     return discrete, config
 
 
+def _valid_convergence_entries(solver: Any) -> List[Tuple[Any, Any, Any]]:
+    """Return convergence entries that include iteration, elapsed time, and solution."""
+    convergence_log = getattr(solver, "convergence_log", None)
+    if not convergence_log:
+        return []
+
+    entries: List[Tuple[Any, Any, Any]] = []
+    for entry in convergence_log:
+        if len(entry) < 3:
+            continue
+        entries.append((entry[0], entry[1], entry[2]))
+    return entries
+
+
+def _convergence_entry_metadata(entry: Any) -> Dict[str, Any]:
+    """Return optional metadata stored in a convergence entry."""
+    if len(entry) >= 4 and isinstance(entry[3], dict):
+        return entry[3]
+    return {}
+
+
+def _format_convergence_iterations(solver: Any) -> str:
+    """Return convergence iteration indices recorded by a solver.
+
+    Solvers usually record convergence as tuples of
+    ``(iteration, elapsed, solution_snapshot)``. LNS additionally stores
+    metadata as ``(iteration, elapsed, solution_snapshot, metadata)`` so the
+    trace can show the local iteration inside the specific candidate that
+    improved the global incumbent.
+    """
+    convergence_log = getattr(solver, "convergence_log", None)
+    if not convergence_log:
+        return ""
+
+    formatted: List[str] = []
+    for entry in convergence_log:
+        if len(entry) < 3:
+            continue
+        metadata = _convergence_entry_metadata(entry)
+        candidate = metadata.get("candidate")
+        phase = metadata.get("phase")
+        local_iteration = metadata.get("local_iteration", entry[0])
+
+        if candidate is not None:
+            formatted.append(f"candidate{candidate}:{phase or 'iter'}@{local_iteration}")
+        elif phase:
+            formatted.append(f"{phase}@{local_iteration}")
+        else:
+            formatted.append(str(entry[0]))
+
+    return ";".join(formatted)
+
+
+def _convergence_analysis(solver: Any) -> Dict[str, Any]:
+    """Summarize convergence into table-friendly metrics.
+
+    The metrics are generic enough for VND, VNS, and LNS. For LNS, the
+    iteration values can include candidate offsets because LNSSolver records
+    improvements across multiple starting candidates.
+    """
+    entries = _valid_convergence_entries(solver)
+    if not entries:
+        return {
+            "count": 0,
+            "first_objective": "",
+            "final_objective": "",
+            "improvement": "",
+            "improvement_percent": "",
+        }
+
+    first_objective = getattr(entries[0][2], "objective", float("nan"))
+    best_objective = min(
+        getattr(solution, "objective", float("nan"))
+        for _, _, solution in entries
+    )
+    improvement = first_objective - best_objective
+
+    if first_objective and not math.isnan(first_objective):
+        improvement_percent = 100.0 * improvement / first_objective
+    else:
+        improvement_percent = float("nan")
+
+    return {
+        "count": len(entries),
+        "first_objective": _format_number(first_objective),
+        "final_objective": _format_number(best_objective),
+        "improvement": _format_number(improvement),
+        "improvement_percent": _format_number(improvement_percent),
+    }
+
+
+def _print_convergence_log(name: str, solver: Any) -> None:
+    """Print convergence records captured during a solver run."""
+    convergence_log = getattr(solver, "convergence_log", None)
+    if not convergence_log:
+        print(f"[{name}] convergence: <empty>")
+        return
+
+    print(f"[{name}] convergence:")
+    for entry in convergence_log:
+        if len(entry) < 3:
+            print(f"  iteration={entry[0] if entry else '?'}")
+            continue
+        iteration, elapsed, solution = entry[:3]
+        metadata = _convergence_entry_metadata(entry)
+        objective = getattr(solution, "objective", float("nan"))
+
+        if metadata:
+            candidate = metadata.get("candidate")
+            phase = metadata.get("phase", "unknown")
+            local_iteration = metadata.get("local_iteration", iteration)
+            candidate_label = "global" if candidate is None else f"candidate={candidate}"
+            print(
+                f"  phase={phase} "
+                f"{candidate_label} "
+                f"local_iteration={local_iteration} "
+                f"time={_format_number(elapsed)}s "
+                f"objective={_format_number(objective)}"
+            )
+        else:
+            print(
+                f"  iteration={iteration} "
+                f"time={_format_number(elapsed)}s "
+                f"objective={_format_number(objective)}"
+            )
+
+
 def run_one_algorithm(
     name: str,
     solver_cls: Type,
@@ -169,6 +308,8 @@ def run_one_algorithm(
     started = time.perf_counter()
     solution, final_instance = solver.solve()  # The benchmark uses only the public solve() call.
     elapsed = time.perf_counter() - started
+    _print_convergence_log(name, solver)
+    convergence = _convergence_analysis(solver)
 
     return BenchmarkRow(
         Algorithm=name,
@@ -184,6 +325,12 @@ def run_one_algorithm(
         Total_GHG=solution.total_ghg,
         Time=elapsed,
         Flight_Optimizer=config.flight_optimizer,
+        Convergence_Iterations=_format_convergence_iterations(solver),
+        Convergence_Count=convergence["count"],
+        Convergence_First_Objective=convergence["first_objective"],
+        Convergence_Final_Objective=convergence["final_objective"],
+        Convergence_Improvement=convergence["improvement"],
+        Convergence_Improvement_Percent=convergence["improvement_percent"],
     )
 
 
@@ -217,6 +364,12 @@ def write_output(rows: Sequence[BenchmarkRow], output: Path) -> None:
                 "Total GHG",
                 "Time",
                 "Flight Optimizer",
+                "Convergence Iterations",
+                "Convergence Count",
+                "Convergence First Objective",
+                "Convergence Final Objective",
+                "Convergence Improvement",
+                "Convergence Improvement Percent",
             ],
         )
         writer.writeheader()
@@ -239,6 +392,12 @@ def render_markdown(rows: Sequence[BenchmarkRow]) -> str:
         "Total GHG",
         "Time",
         "Flight Optimizer",
+        "Convergence Iterations",
+        "Convergence Count",
+        "Convergence First Objective",
+        "Convergence Final Objective",
+        "Convergence Improvement",
+        "Convergence Improvement Percent",
     ]
     body = []
     for row in rows:
@@ -302,7 +461,7 @@ def main(argv: Optional[Sequence[str]] = None) -> None:
     parser.add_argument("--vns-k-max", type=int, default=4, help="VNSSolver k_max constructor argument")
     parser.add_argument("--vns-max-iter", type=int, default=100, help="VNSSolver max_iter constructor argument")
     parser.add_argument("--lns-destroy-frac", type=float, default=0.3, help="LNSSolver destroy_frac constructor argument")
-    parser.add_argument("--lns-max-iter", type=int, default=500, help="LNSSolver max_iter constructor argument")
+    parser.add_argument("--lns-max-iter", type=int, default=200, help="LNSSolver max_iter constructor argument")
     # LCB-IMMA knobs
     parser.add_argument("--lcb-n-pop", type=int, default=40, help="LCBIMMASolver population size")
     parser.add_argument("--lcb-t-wall", type=float, default=60.0, help="LCBIMMASolver wall-clock budget (s)")

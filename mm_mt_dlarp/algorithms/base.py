@@ -43,7 +43,7 @@ class SolverConfig:
     bc_tailoff_window: int = 5
     bc_tailoff_tol: float = 5e-7
     split_top_k: int = 10
-    objective_type: str = "minmax_ghg"
+    objective_type: str = "paper_makespan"
     time_limit_seconds: Optional[float] = None
     search_deadline: Optional[float] = None
     # GHG emission factors (paper Section 3.1)
