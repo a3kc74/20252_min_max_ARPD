@@ -4,7 +4,7 @@ Build aggregated comparison table from summary_final.csv.
 Reads exp/summary_final.csv (produced by make_final_sum.py) and writes
 exp/table.csv with per-(instance, scale, algorithm) statistics:
 
-  min_objective          — best single-run GHG emission
+  min_objective          — best single-run objective
   mean±std_objective     — mean ± std over all runs
   min_runtime_s          — fastest run (seconds)
   mean±std_runtime_s     — mean ± std runtime

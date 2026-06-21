@@ -182,7 +182,7 @@ VNS hiện tại chỉ có một shaking kiểu `destroy_and_repair` lặp `k` l
 
 - không bị phụ thuộc vào `k_max` cố định,
 - tự học mức perturbation phù hợp,
-- ưu tiên operator tạo cải thiện cho objective `minmax_ghg`,
+- ưu tiên operator tạo cải thiện cho objective `paper_makespan`,
 - giảm thời gian lãng phí ở operator yếu.
 
 ### Đề xuất áp dụng
@@ -362,7 +362,7 @@ Phù hợp với minimization và dễ kiểm soát.
 
 ### Lợi ích cho repo
 
-Objective `minmax_ghg` có thể có landscape gồ ghề do bottleneck launch. Strict improvement dễ làm VNS kẹt ở nghiệm mà mọi move nhỏ đều không giảm max GHG.
+Objective `paper_makespan` có thể có landscape gồ ghề do bottleneck launch. Strict improvement dễ làm VNS kẹt ở nghiệm mà mọi move nhỏ đều không giảm max route cost.
 
 Cho phép nhận nghiệm hơi xấu hơn có thể:
 
@@ -643,7 +643,7 @@ Destroy operators:
 4. related removal,
 5. route removal,
 6. Shaw removal,
-7. emission-contribution removal.
+7. cost-contribution removal.
 
 Repair operators:
 
@@ -664,13 +664,13 @@ Repo đã có:
 
 Có thể reuse nhiều logic từ `LNSSolver` để tạo shaking operators cho VNS.
 
-### Đề xuất operator phù hợp với `minmax_ghg`
+### Đề xuất operator phù hợp với `paper_makespan`
 
-#### 1. Bottleneck emission removal
+#### 1. Bottleneck cost removal
 
-Remove task từ launch đang có GHG lớn nhất.
+Remove task từ launch đang có objective lớn nhất.
 
-Score task theo đóng góp emission:
+Score task theo đóng góp cost:
 
 ```text
 contribution(task) = objective_before - objective_after_removing_task
@@ -693,7 +693,7 @@ Insertion cost nên không chỉ là objective absolute, mà gồm penalty bottl
 ```text
 score = new_objective
       + lambda_balance * std(ghg_by_launch)
-      + lambda_total * total_ghg
+      + lambda_total * paper_makespan
 ```
 
 #### 4. Regret insertion
@@ -708,13 +708,13 @@ Chèn task có regret lớn trước để tránh bị kẹt.
 
 ---
 
-## 4.9. Adaptive objective scalarization cho `minmax_ghg`
+## 4.9. Adaptive objective scalarization cho `paper_makespan`
 
 ### Vấn đề
 
-Với objective `minmax_ghg`, nhiều move có thể không giảm max GHG ngay nhưng vẫn cải thiện cấu trúc nghiệm:
+Với objective `paper_makespan`, nhiều move có thể không giảm max objective ngay nhưng vẫn cải thiện cấu trúc nghiệm:
 
-- giảm total GHG,
+- giảm aggregate route cost,
 - cân bằng tải giữa launch,
 - giảm paper makespan,
 - giảm số flight,
@@ -727,8 +727,8 @@ Nếu chỉ accept khi `objective` giảm strict, search có thể bỏ qua các
 Dùng auxiliary score trong acceptance hoặc tie-breaking:
 
 ```text
-primary: minmax_ghg
-secondary: total_ghg
+primary: paper_makespan
+secondary: paper_makespan
 tertiary: paper_makespan
 quaternary: balance
 ```
@@ -738,7 +738,7 @@ Lexicographic hoặc weighted adaptive:
 ```text
 search_score =
     objective
-    + lambda_total * normalized_total_ghg
+    + lambda_total * normalized_paper_makespan
     + lambda_balance * normalized_balance
 ```
 
@@ -750,9 +750,9 @@ Khi so sánh candidate trong VNS, dùng hai mức:
 
 1. Nếu candidate objective tốt hơn → nhận.
 2. Nếu objective bằng hoặc trong threshold nhỏ:
-   - nhận nếu `total_ghg` giảm,
+   - nhận nếu `paper_makespan` giảm,
    - hoặc `paper_makespan` giảm,
-   - hoặc GHG balance tốt hơn.
+   - hoặc objective balance tốt hơn.
 
 Điều này đặc biệt hữu ích cho plateau của min-max objective.
 
@@ -1132,13 +1132,13 @@ Chọn sequence theo bandit hoặc score.
 
 ---
 
-### B4. Plateau-aware tie-breaking cho `minmax_ghg`
+### B4. Plateau-aware tie-breaking cho `paper_makespan`
 
 Khi objective không đổi hoặc chênh rất nhỏ:
 
 ```python
 if abs(candidate.objective - current.objective) <= eps_plateau:
-    accept if candidate.total_ghg < current.total_ghg
+    accept if candidate.paper_makespan < current.paper_makespan
 ```
 
 Hoặc:
@@ -1146,7 +1146,7 @@ Hoặc:
 ```python
 secondary_score = (
     candidate.objective,
-    candidate.total_ghg,
+    candidate.paper_makespan,
     candidate.paper_makespan,
 )
 ```
@@ -1203,7 +1203,7 @@ Có thể dùng contextual bandit với features:
 - stagnation,
 - number of flights,
 - bottleneck launch load,
-- total GHG,
+- aggregate route cost,
 - current `k`,
 - instance size.
 
@@ -1374,7 +1374,7 @@ remove task from bottleneck
 insert into non-bottleneck launch if feasible
 ```
 
-Phù hợp trực tiếp với `minmax_ghg`.
+Phù hợp trực tiếp với `paper_makespan`.
 
 ## 8.3. `lns_shake_small`
 
@@ -1406,7 +1406,7 @@ Có thể hữu ích vì mỗi `Task` có hướng phục vụ edge.
 
 ---
 
-## 9. Reward design cụ thể cho bài toán `minmax_ghg`
+## 9. Reward design cụ thể cho bài toán `paper_makespan`
 
 Với minimization:
 
@@ -1435,7 +1435,7 @@ if new < best_old:
     reward += 10.0
     reward += 100 * (best_old - new) / max(abs(best_old), 1e-9)
 
-if new approximately equals old and candidate.total_ghg < current.total_ghg:
+if new approximately equals old and candidate.paper_makespan < current.paper_makespan:
     reward += 0.5
 
 reward -= 0.01 * runtime_seconds
@@ -1473,7 +1473,7 @@ Thêm secondary metric:
 
 ```python
 if abs(candidate.objective - current.objective) <= eps_plateau:
-    if candidate.total_ghg + eps < current.total_ghg:
+    if candidate.paper_makespan + eps < current.paper_makespan:
         return True
 ```
 
@@ -1557,7 +1557,7 @@ operator_score
 deviation
 no_improve_iters
 restart_count
-total_ghg
+paper_makespan
 paper_makespan
 ```
 
@@ -1590,7 +1590,7 @@ Trên cùng:
 - random seed,
 - time limit,
 - initial discretization,
-- objective_type,
+- objective,
 - number of runs mỗi instance.
 
 Metrics:
@@ -1599,7 +1599,7 @@ Metrics:
 best objective
 mean objective
 std objective
-best total_ghg
+best paper_makespan
 mean runtime
 time-to-best
 convergence curve
@@ -1769,7 +1769,7 @@ Khi objective gần bằng:
 
 ```python
 if abs(candidate.objective - current.objective) <= 1e-9:
-    if candidate.total_ghg < current.total_ghg:
+    if candidate.paper_makespan < current.paper_makespan:
         accept
 ```
 
@@ -1803,7 +1803,7 @@ Nếu reward chỉ dựa trên best improvement, operator exploration có thể 
 
 ### 16.3. Acceptance quá lỏng làm mất intensification
 
-Nếu `deviation_max` quá lớn, solver có thể random walk. Với objective `minmax_ghg`, nên bắt đầu nhỏ:
+Nếu `deviation_max` quá lớn, solver có thể random walk. Với objective `paper_makespan`, nên bắt đầu nhỏ:
 
 ```text
 deviation_start = 0.005 đến 0.02

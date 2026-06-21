@@ -134,12 +134,12 @@ Each non-required edge $e \in E_{NR}$ carries a deadheading cost $c_e > 0$, prop
 Each required edge $e \in E_R$ carries a \emph{service cost} $c^s_e > 0$, which represents the GHG-equivalent cruise emission incurred when a drone flies over and services that segment (i.e., $c^s_e$ subsumes both the physical traversal and the sensor-operation overhead). We assume $c^s_e \geq c_{e'}$ for each parallel pair $(e, e')$, reflecting the additional cost of active sensing. Deadheading costs satisfy the triangle inequality. The truck travel cost from depot $0$ to launching point $d$ is $c_{0d} \geq 0$.
 
 The truck emission for a round-trip to launching point $d$ is:
-\begin{equation}\label{eq:truck_emission}
+\begin{equation}\label{eq:truck_cost}
  E^{\mathrm{truck}}_d = F_t \cdot 2\,c_{0d}.
 \end{equation}
 
 The drone emission for flight $k$ from launching point $d$ now accounts for three phases-vertical takeoff, horizontal cruise, and vertical landing:
-\begin{equation}\label{eq:drone_emission}
+\begin{equation}\label{eq:drone_cost}
  E^{\mathrm{drone}}_{dk} =
  \underbrace{2\,F_d^{vt} \cdot u^{dk}}_{\text{takeoff + landing}}
  + \underbrace{F_d \!\left(

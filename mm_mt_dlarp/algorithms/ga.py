@@ -7,7 +7,7 @@ search hybridisation.
 Operators
 ---------
 * Selection  : binary / k-way tournament (default k = 3).
-* Crossover  : emission-guided flight crossover — a random non-empty flight
+* Crossover  : cost-based flight crossover — a random non-empty flight
                from the tournament-winner donor is re-inserted into a clone
                of the recipient parent; tasks already in the recipient that
                overlap with the donated flight are first removed.
@@ -101,11 +101,11 @@ class GASolver(MatheuristicBase):
         return min(self.rng.sample(pop, k), key=lambda s: s.objective)
 
     # ──────────────────────────────────────────────────────────────────────────
-    # Crossover — emission-guided flight donation
+    # Crossover — cost-based flight donation
     # ──────────────────────────────────────────────────────────────────────────
 
     def _crossover(self, pop: List[Solution]) -> List[Solution]:
-        """Produce len(pop) offspring via emission-guided flight crossover.
+        """Produce len(pop) offspring via cost-based flight crossover.
 
         For each offspring:
           1. Select donor and recipient via tournament (two independent draws).

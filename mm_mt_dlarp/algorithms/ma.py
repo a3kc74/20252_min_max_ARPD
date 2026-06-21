@@ -12,7 +12,7 @@ Algorithm sketch
 ----------------
 1. Initialise population of n_pop feasible solutions; apply VND to each.
 2. While wall-clock < T_wall:
-   a. Produce n_pop offspring via tournament selection + emission crossover.
+   a. Produce n_pop offspring via tournament selection + cost-based crossover.
    b. Apply random task-relocation mutation (rate mutation_rate).
    c. Apply VND local search to each offspring.
    d. (μ + λ) survivor selection: keep top n_pop from parents ∪ offspring.

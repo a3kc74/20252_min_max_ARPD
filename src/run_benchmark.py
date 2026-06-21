@@ -34,11 +34,8 @@ class BenchmarkRow:
     Flight_Limit: float
     Trucks_Used: int
     Trucks_Submitted: int
-    Objective_Type: str
     Objective: float
     Paper_Makespan: float
-    GHG_Makespan: float
-    Total_GHG: float
     Time: float
     Flight_Optimizer: str
     Convergence_Iterations: str
@@ -56,11 +53,8 @@ class BenchmarkRow:
             "Flight Limit": _format_number(self.Flight_Limit),
             "Trucks Used": self.Trucks_Used,
             "Trucks Submitted": self.Trucks_Submitted,
-            "Objective Type": self.Objective_Type,
             "Objective": _format_number(self.Objective),
             "Paper Makespan": _format_number(self.Paper_Makespan),
-            "GHG Makespan": _format_number(self.GHG_Makespan),
-            "Total GHG": _format_number(self.Total_GHG),
             "Time": _format_number(self.Time),
             "Flight Optimizer": self.Flight_Optimizer,
             "Convergence Iterations": self.Convergence_Iterations,
@@ -131,11 +125,6 @@ def _clone_config(config_template: SolverConfig, seed: int, verbose: bool) -> So
         split_top_k=config_template.split_top_k,
         time_limit_seconds=config_template.time_limit_seconds,
         search_deadline=config_template.search_deadline,
-        objective_type=config_template.objective_type,
-        emission_truck=config_template.emission_truck,
-        emission_drone_cruise=config_template.emission_drone_cruise,
-        emission_drone_vt=config_template.emission_drone_vt,
-        emission_epsilon=config_template.emission_epsilon,
         verbose=verbose,
     )
 
@@ -318,11 +307,8 @@ def run_one_algorithm(
         Flight_Limit=solver.L,
         Trucks_Used=len(solution.selected_launches),
         Trucks_Submitted=config.num_trucks,
-        Objective_Type=config.objective_type,
         Objective=solution.objective,
         Paper_Makespan=solution.paper_makespan,
-        GHG_Makespan=solution.ghg_makespan,
-        Total_GHG=solution.total_ghg,
         Time=elapsed,
         Flight_Optimizer=config.flight_optimizer,
         Convergence_Iterations=_format_convergence_iterations(solver),
@@ -357,11 +343,8 @@ def write_output(rows: Sequence[BenchmarkRow], output: Path) -> None:
                 "Flight Limit",
                 "Trucks Used",
                 "Trucks Submitted",
-                "Objective Type",
                 "Objective",
                 "Paper Makespan",
-                "GHG Makespan",
-                "Total GHG",
                 "Time",
                 "Flight Optimizer",
                 "Convergence Iterations",
@@ -385,11 +368,8 @@ def render_markdown(rows: Sequence[BenchmarkRow]) -> str:
         "Flight Limit",
         "Trucks Used",
         "Trucks Submitted",
-        "Objective Type",
         "Objective",
         "Paper Makespan",
-        "GHG Makespan",
-        "Total GHG",
         "Time",
         "Flight Optimizer",
         "Convergence Iterations",
@@ -433,7 +413,6 @@ def main(argv: Optional[Sequence[str]] = None) -> None:
         help="Comma-separated subset/order. Baselines: vnd,vns,lns,lcb_imma.",
     )
     parser.add_argument("--quiet", action="store_true", help="Disable solver progress logs")
-    parser.add_argument("--objective-type", choices=["minmax_ghg", "paper_makespan", "total_ghg"], default="minmax_ghg")
     parser.add_argument("--flight-optimizer", choices=["bc", "dp", "auto"], default="bc")
     parser.add_argument("--bc-time-limit", type=float, default=None)
     parser.add_argument("--bc-mip-gap", type=float, default=0.0)
@@ -469,10 +448,6 @@ def main(argv: Optional[Sequence[str]] = None) -> None:
     parser.add_argument("--lcb-alpha", type=float, default=1.0, help="LCBIMMASolver LinUCB exploration coefficient")
     parser.add_argument("--lcb-rho", type=float, default=0.99, help="LCBIMMASolver annealing decay rate")
     parser.add_argument("--lcb-T0", type=float, default=1.0, help="LCBIMMASolver initial Metropolis temperature")
-    # Emission factor overrides
-    parser.add_argument("--emission-truck", type=float, default=1.0, help="F_t: truck GHG emission factor")
-    parser.add_argument("--emission-drone-cruise", type=float, default=1.0, help="F_d: drone cruise emission factor")
-    parser.add_argument("--emission-drone-vt", type=float, default=0.0, help="F_d^vt: drone vertical takeoff/landing emission per flight")
     args = parser.parse_args(argv)
 
     instance, config = build_instance(args.instance_file, args.num_trucks, args.flight_limit, args.base_vertex)
@@ -486,7 +461,6 @@ def main(argv: Optional[Sequence[str]] = None) -> None:
     config.split_top_k = args.split_top_k
     config.time_limit_seconds = args.component_time_limit if args.component_time_limit > 0 else None
     config.verbose = not args.quiet
-    config.objective_type = args.objective_type
     config.flight_optimizer = args.flight_optimizer
     config.bc_time_limit = args.bc_time_limit
     config.bc_mip_gap = args.bc_mip_gap
@@ -496,10 +470,6 @@ def main(argv: Optional[Sequence[str]] = None) -> None:
     config.bc_cut_at_fractional_nodes = args.bc_cut_at_fractional_nodes
     config.bc_cut_at_integer_solutions = args.bc_cut_at_integer_solutions
     config.bc_max_cuts_per_round = args.bc_max_cuts_per_round
-    config.emission_truck = args.emission_truck
-    config.emission_drone_cruise = args.emission_drone_cruise
-    config.emission_drone_vt = args.emission_drone_vt
-
     selected_baselines = dict(BASELINE_ALGORITHMS)
     per_algorithm_kwargs: Dict[str, Dict[str, Any]] = {
         "vnd": {},

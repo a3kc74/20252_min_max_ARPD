@@ -1,0 +1,17 @@
+{
+  "instance": "MTLARP4_4_6_2.dat",
+  "base": 15,
+  "num_trucks": 2,
+  "flight_limit": 903.0,
+  "objective": 1623.5162259858075,
+  "paper_makespan": 1623.5162259858075,
+  "trucks_used": 2,
+  "solve_seconds": 32.9361526779976,
+  "adaptive_shake_seconds": 20.848974121036008,
+  "adaptive_shake_calls": 409,
+  "adaptive_vnd_seconds": 5.703792171916575,
+  "adaptive_vnd_calls": 411,
+  "splitting_phase_seconds": 0.19954641899676062,
+  "splitting_phase_calls": 1,
+  "adaptive_vnd_outside_splitting_estimate_seconds": 5.5042457529198145
+}

@@ -66,7 +66,7 @@ DEFAULTS: dict = {**_CSV_DEFAULTS, "T_wall": T_WALL_DEFAULT}
 
 # ---------------------------------------------------------------------------
 
-CONV_FIELDS = ["generation", "time", "best_solution", "GHG", "fitness"]
+CONV_FIELDS = ["generation", "time", "best_solution", "objective", "fitness"]
 SUMMARY_FIELDS = [
     "param_no", "param_name", "value_idx", "value",
     "run_num", "fitness", "is_feasible", "final_generation", "runtime_s",
@@ -102,7 +102,7 @@ def _write_conv_log(writer, conv_log) -> None:
             "generation":    gen,
             "time":          f"{t:.4f}",
             "best_solution": _solution_repr(sol),
-            "GHG":           f"{ghg:.6f}",
+            "objective":           f"{ghg:.6f}",
             "fitness":       f"{sol.objective:.6f}",
         })
 
