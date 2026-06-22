@@ -1,0 +1,70 @@
+\chapter{GIỚI THIỆU}
+\label{chap:gioi-thieu}
+
+\section{Đặt vấn đề}
+
+Trong những năm gần đây, máy bay không người lái, hay drone, ngày càng được sử dụng rộng rãi trong các bài toán vận tải, giám sát, kiểm tra hạ tầng và thu thập dữ liệu. So với các phương tiện mặt đất truyền thống, drone có khả năng di chuyển trực tiếp trong không gian, không bị ràng buộc bởi mạng đường bộ và có thể tiếp cận những khu vực khó đi lại hoặc nguy hiểm đối với con người. Vì vậy, drone đặc biệt phù hợp với các nhiệm vụ kiểm tra các hạ tầng dạng tuyến như đường dây điện, đường ống, đường giao thông, kênh mương hoặc các mạng lưới công trình trải dài trong không gian.
+
+Trong các bài toán kiểm tra hạ tầng tuyến tính, đối tượng cần phục vụ thường không phải là các điểm rời rạc mà là các đoạn tuyến hoặc các cạnh của một mạng lưới. Drone cần bay dọc theo các đoạn này để thực hiện nhiệm vụ như ghi hình, kiểm tra, đo đạc hoặc thu thập dữ liệu cảm biến. Do đó, lớp bài toán phù hợp để mô hình hóa các ứng dụng này là bài toán định tuyến trên cung, hay \textit{Arc Routing Problem} (ARP), thay vì các bài toán định tuyến trên nút như \textit{Traveling Salesman Problem} hoặc \textit{Vehicle Routing Problem}.
+
+Tuy nhiên, việc sử dụng drone trong các bài toán định tuyến trên cung cũng tạo ra nhiều thách thức mới. Thứ nhất, drone có giới hạn về thời lượng pin nên mỗi chuyến bay chỉ có thể kéo dài tối đa trong một khoảng thời gian hoặc quãng đường nhất định. Thứ hai, đối với các mạng hạ tầng lớn, một drone đơn lẻ không thể hoàn thành toàn bộ nhiệm vụ. Thứ ba, drone thường cần phương tiện mặt đất hỗ trợ để vận chuyển đến gần khu vực cần kiểm tra, thay pin, cất cánh và hạ cánh. Vì vậy, bài toán thực tế không chỉ là tìm đường bay cho drone, mà còn phải đồng thời quyết định vị trí triển khai phương tiện mặt đất, phân công các đoạn tuyến cần phục vụ và xây dựng nhiều chuyến bay khả thi cho từng drone.
+
+Từ bối cảnh đó, bài toán \textit{Min--Max Multi--Trip Drone Location Arc Routing Problem} (MM-MT-dLARP) được đề xuất nhằm mô hình hóa tình huống trong đó có một depot trung tâm, một tập các xe tải, mỗi xe tải mang theo một drone, và một tập các điểm tiềm năng để xe tải có thể đến triển khai drone. Mỗi drone có thể thực hiện nhiều chuyến bay từ điểm triển khai được chọn, nhưng mỗi chuyến bay phải thỏa mãn giới hạn về thời lượng bay. Mục tiêu của bài toán là hoàn thành toàn bộ nhiệm vụ kiểm tra trong thời gian sớm nhất, tức là tối thiểu hóa thời gian hoàn thành lớn nhất trong số các cặp xe tải--drone \cite{corberan2025mmdlarp}.
+
+\section{Bài toán định tuyến cung lựa chọn điểm triển khai drone nhiều chuyến}
+
+Bài toán được xét trong đồ án gồm một tập các đoạn tuyến cần được phục vụ bởi drone, một depot trung tâm, một tập các điểm triển khai tiềm năng và một số lượng hữu hạn xe tải. Mỗi xe tải mang theo một drone và có thể di chuyển từ depot đến một điểm triển khai. Tại điểm này, drone được cất cánh, hạ cánh, thay pin nếu cần và thực hiện một hoặc nhiều chuyến bay để phục vụ các đoạn tuyến được phân công.
+
+Mỗi chuyến bay của drone bắt đầu tại điểm triển khai, bay đến một hoặc nhiều đoạn tuyến cần phục vụ, thực hiện nhiệm vụ trên các đoạn tuyến đó, sau đó quay trở lại đúng điểm triển khai ban đầu. Do giới hạn pin, tổng chi phí hoặc thời gian của mỗi chuyến bay không được vượt quá một hằng số (L). Hai xe tải khác nhau không được sử dụng cùng một điểm triển khai. Toàn bộ các đoạn tuyến yêu cầu phải được phục vụ ít nhất một lần.
+
+Mục tiêu của bài toán là lựa chọn các điểm triển khai, phân công các đoạn tuyến cần phục vụ cho các drone và xây dựng tập các chuyến bay khả thi sao cho thời gian hoàn thành lớn nhất trong số các xe tải--drone là nhỏ nhất. Với mỗi xe tải, chi phí được tính bằng chi phí di chuyển từ depot đến điểm triển khai và quay lại, cộng với tổng chi phí các chuyến bay của drone tương ứng. Vì toàn bộ nhiệm vụ chỉ hoàn thành khi phương tiện cuối cùng kết thúc công việc, hàm mục tiêu có dạng min--max và phản ánh yêu cầu cân bằng tải giữa các xe tải--drone.
+
+Một đặc điểm quan trọng của bài toán là bản chất liên tục của không gian bay. Drone không bị ràng buộc bởi mạng đường bộ và có thể bay trực tiếp giữa hai điểm bất kỳ trong không gian. Ngoài ra, drone có thể đi vào hoặc rời khỏi một đoạn tuyến tại các điểm nằm bên trong đoạn tuyến, không nhất thiết chỉ tại hai đầu mút. Đặc điểm này giúp tạo ra các nghiệm linh hoạt hơn so với phương tiện mặt đất, nhưng cũng làm bài toán khó hơn do không gian lựa chọn là liên tục.
+
+Để xử lý bài toán về mặt tính toán, bài toán liên tục MM-MT-dLARP thường được rời rạc hóa bằng cách xấp xỉ mỗi đường cần phục vụ bởi một chuỗi đa giác gồm hữu hạn điểm trung gian. Khi đó, drone chỉ được phép đi vào hoặc rời khỏi một đường tại các điểm đã được chọn trước. Phiên bản rời rạc thu được được gọi là \textit{Min--Max Multi--Trip Location Arc Routing Problem} (MM-MT-LARP). Trong phiên bản này, các đoạn nhỏ của chuỗi đa giác trở thành các cạnh yêu cầu, còn các cạnh không yêu cầu biểu diễn việc drone bay chết giữa hai điểm mà không thực hiện phục vụ \cite{corberan2025mmdlarp}.
+
+\section{Động lực lựa chọn đề tài}
+
+Bài toán MM-MT-dLARP có ý nghĩa thực tiễn trong các ứng dụng kiểm tra hạ tầng quy mô lớn. Trong các mạng như đường dây điện, đường ống hoặc đường giao thông, nhiệm vụ kiểm tra thường trải dài trên một vùng rộng. Nếu chỉ sử dụng một drone hoặc chỉ xét một điểm xuất phát cố định, kế hoạch kiểm tra có thể không hiệu quả do giới hạn pin và khoảng cách tiếp cận lớn. Việc kết hợp xe tải và drone cho phép đưa drone đến gần khu vực cần kiểm tra hơn, đồng thời hỗ trợ drone thực hiện nhiều chuyến bay liên tiếp.
+
+Về mặt mô hình hóa, MM-MT-dLARP là một bài toán khó vì kết hợp đồng thời nhiều quyết định: lựa chọn điểm triển khai, phân công các cạnh yêu cầu, xây dựng thứ tự phục vụ trong từng chuyến bay và cân bằng thời gian hoàn thành giữa các phương tiện. Bài toán cũng kết hợp các yếu tố của \textit{Location Arc Routing Problem}, bài toán nhiều depot và bài toán định tuyến drone có giới hạn thời lượng bay. Do đó, không gian nghiệm của bài toán rất lớn và các phương pháp giải chính xác thường chỉ phù hợp với các thể hiện nhỏ.
+
+Bài báo nền tảng về MM-MT-dLARP đã đề xuất mô hình quy hoạch nguyên cho phiên bản rời rạc, các bất đẳng thức hợp lệ, thuật toán branch-and-cut và một thuật toán matheuristic. Trong đó, thuật toán matheuristic kết hợp pha xây dựng nghiệm, các thủ tục tìm kiếm cục bộ, \textit{Variable Neighborhood Descent} (VND) và cơ chế chọn điểm trung gian để cải thiện nghiệm \cite{corberan2025mmdlarp}. Điều này cho thấy các thuật toán tìm kiếm lân cận đóng vai trò quan trọng khi kích thước bài toán tăng lên.
+
+Từ động lực đó, đồ án tập trung nghiên cứu hướng giải gần đúng cho bài toán MM-MT-dLARP. Thay vì đi sâu vào nhánh nghiên cứu đa diện và branch-and-cut, đồ án hướng đến việc phân tích biểu diễn nghiệm, thiết kế các toán tử lân cận và xây dựng các khung tìm kiếm như tìm kiếm cục bộ, VNS hoặc LNS. Cách tiếp cận này phù hợp với các bài toán định tuyến có độ phức tạp cao, trong đó mục tiêu thực tế là tìm nghiệm tốt trong thời gian tính toán chấp nhận được.
+
+\section{Mục tiêu của đồ án}
+
+Mục tiêu tổng quát của đồ án là nghiên cứu bài toán MM-MT-dLARP và xây dựng hướng tiếp cận giải gần đúng dựa trên các thuật toán tìm kiếm lân cận. Trọng tâm của đồ án là hiểu rõ cấu trúc bài toán, cách biểu diễn nghiệm và cách thiết kế các phép biến đổi nghiệm nhằm cải thiện giá trị min--max của lời giải.
+
+Các mục tiêu cụ thể của đồ án gồm: (i) tìm hiểu và trình bày bài toán MM-MT-dLARP, bao gồm bối cảnh ứng dụng, dữ liệu đầu vào, dữ liệu đầu ra, hàm mục tiêu và các ràng buộc chính; (ii) mô tả phiên bản rời rạc MM-MT-LARP và mối liên hệ giữa các đoạn tuyến liên tục với các cạnh yêu cầu trong đồ thị; (iii) phân tích cấu trúc nghiệm gồm tập điểm triển khai được chọn và tập các chuyến bay của drone tại từng điểm triển khai; (iv) thiết kế các nhóm toán tử lân cận như di chuyển cạnh yêu cầu, hoán đổi chuỗi cạnh, tái phân công giữa các điểm triển khai và phá hủy--tái tạo một phần nghiệm; (v) xây dựng khung thuật toán tìm kiếm lân cận phù hợp với bài toán, chẳng hạn VNS hoặc LNS; và (vi) đánh giá thuật toán thông qua các chỉ số như giá trị makespan, tính khả thi của các chuyến bay, mức cân bằng tải và thời gian thực thi.
+
+\section{Phạm vi nghiên cứu}
+
+Đồ án tập trung vào bài toán MM-MT-dLARP và phiên bản rời rạc MM-MT-LARP trong bối cảnh lập kế hoạch kiểm tra các đoạn tuyến bằng drone có xe tải hỗ trợ. Các đoạn tuyến cần phục vụ được xem là dữ liệu đầu vào đã biết trước. Đồ án không đi sâu vào bài toán xử lý ảnh, nhận dạng hạ tầng, điều khiển bay thực tế hoặc mô phỏng động lực học của drone.
+
+Về mặt mô hình, đồ án xét các thành phần chính gồm depot, tập điểm triển khai tiềm năng, tập cạnh yêu cầu, số lượng xe tải--drone, giới hạn độ dài mỗi chuyến bay và mục tiêu min--max. Các yếu tố vận hành phức tạp hơn như thời tiết, vùng cấm bay, độ cao bay, thời gian thay pin chi tiết hoặc sự cố thiết bị chưa được xem xét trong phạm vi chính của đồ án.
+
+Về mặt phương pháp, đồ án không đặt mục tiêu xây dựng thuật toán exact hoàn chỉnh hoặc tái lập toàn bộ nghiên cứu đa diện của bài báo gốc. Thay vào đó, đồ án tập trung vào thiết kế thuật toán gần đúng, đặc biệt là các cơ chế tìm kiếm lân cận và phá hủy--tái tạo nghiệm. Các mô hình quy hoạch nguyên và branch-and-cut trong tài liệu nền được sử dụng chủ yếu để hiểu cấu trúc bài toán và các ràng buộc cốt lõi.
+
+Ngoài ra, đồ án không khẳng định thuật toán đề xuất luôn tốt hơn mọi phương pháp khác trong mọi trường hợp. Các kết luận được rút ra trong phạm vi bộ dữ liệu, tham số và thiết lập thực nghiệm được sử dụng. Khi phân tích kết quả, đồ án tập trung vào chất lượng nghiệm, tính khả thi, khả năng cân bằng tải và hành vi cải thiện nghiệm của thuật toán.
+
+\section{Đóng góp chính của đồ án}
+
+Các đóng góp chính của đồ án có thể tóm tắt như sau. Thứ nhất, đồ án hệ thống hóa bài toán MM-MT-dLARP theo hướng dễ tiếp cận, làm rõ bối cảnh ứng dụng, dữ liệu đầu vào, dữ liệu đầu ra, hàm mục tiêu và các ràng buộc quan trọng. Thứ hai, đồ án trình bày mối liên hệ giữa bài toán liên tục MM-MT-dLARP và phiên bản rời rạc MM-MT-LARP thông qua việc xấp xỉ các đường cần phục vụ bằng chuỗi đa giác.
+
+Thứ ba, đồ án phân tích biểu diễn nghiệm phù hợp cho các thuật toán tìm kiếm lân cận, trong đó một nghiệm gồm tập điểm triển khai được chọn và các chuyến bay của drone tại từng điểm triển khai. Thứ tư, đồ án đề xuất các nhóm toán tử lân cận phục vụ việc cải thiện nghiệm, bao gồm các phép di chuyển trong cùng điểm triển khai, di chuyển giữa các điểm triển khai, trao đổi chuỗi cạnh và phá hủy--tái tạo một phần nghiệm. Thứ năm, đồ án xây dựng định hướng thuật toán dựa trên VNS hoặc LNS để khai thác nhiều cấu trúc lân cận khác nhau và tránh bị kẹt tại cực trị địa phương. Cuối cùng, đồ án thiết kế quy trình đánh giá thuật toán dựa trên giá trị makespan, số chuyến bay khả thi, mức độ cân bằng giữa các xe tải--drone và thời gian thực thi.
+
+\section{Bố cục đồ án}
+
+Phần còn lại của đồ án được tổ chức như sau.
+
+Chương 2 trình bày các cơ sở lý thuyết liên quan đến bài toán, bao gồm bài toán định tuyến trên cung, bài toán định tuyến drone, bài toán Location Arc Routing Problem, các phương pháp tìm kiếm cục bộ, VNS và LNS.
+
+Chương 3 trình bày mô hình bài toán và phương pháp đề xuất. Chương này mô tả dữ liệu đầu vào, dữ liệu đầu ra, các giả thiết, ký hiệu sử dụng, hàm mục tiêu, các ràng buộc chính, biểu diễn nghiệm và khung thuật toán giải gần đúng cho MM-MT-dLARP.
+
+Chương 4 phân tích thiết kế thuật toán. Nội dung chương tập trung vào cách xây dựng nghiệm ban đầu, thiết kế toán tử lân cận, cơ chế phá hủy--tái tạo, chiến lược chấp nhận nghiệm và độ phức tạp tính toán của các thành phần chính.
+
+Chương 5 trình bày thực nghiệm và đánh giá. Chương này mô tả bộ dữ liệu, môi trường thực nghiệm, các tham số, chỉ số đánh giá và phân tích kết quả thu được từ thuật toán.
+
+Chương 6 tổng kết các kết quả đạt được, nêu các hạn chế của đồ án và đề xuất một số hướng phát triển trong tương lai.

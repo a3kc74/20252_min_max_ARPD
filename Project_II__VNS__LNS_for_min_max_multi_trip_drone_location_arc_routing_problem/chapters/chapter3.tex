@@ -1,0 +1,449 @@
+\chapter{MÔ HÌNH BÀI TOÁN VÀ PHƯƠNG PHÁP ĐỀ XUẤT}
+\label{chap:mo-hinh-va-phuong-phap}
+
+\section{Tổng quan phương pháp đề xuất}
+
+Chương này trình bày mô hình bài toán và phương pháp giải được sử dụng trong đồ án. Bài toán được xét là bài toán định tuyến cung bằng máy bay không người lái nhiều chuyến có lựa chọn điểm triển khai. Nhiệm vụ của bài toán là chọn một số điểm triển khai, phân công các đoạn tuyến cần phục vụ cho các điểm triển khai này, sau đó xây dựng các chuyến bay khả thi cho máy bay không người lái sao cho toàn bộ các đoạn tuyến đều được phục vụ.
+
+Hướng tiếp cận của đồ án dựa trên các phương pháp tìm kiếm lân cận. Trước hết, bài toán liên tục được chuyển thành một phiên bản rời rạc bằng cách biểu diễn các tuyến cần phục vụ bởi một số hữu hạn các đoạn nhỏ. Sau đó, thuật toán xây dựng nghiệm ban đầu bằng cách chọn điểm triển khai, phân công các đoạn tuyến và chia các hành trình thành các chuyến bay thỏa mãn giới hạn bay. Từ nghiệm ban đầu, ba nhóm phương pháp được sử dụng để cải thiện nghiệm: tìm kiếm giảm dần theo nhiều lân cận, tìm kiếm theo lân cận biến đổi và tìm kiếm lân cận lớn.
+
+Ba phương pháp trên sử dụng cùng một mô hình bài toán, cùng cách biểu diễn nghiệm và cùng hàm đánh giá. Vì vậy, phần thực nghiệm ở các chương sau có thể so sánh chúng trên cùng một cơ sở. Điểm khác nhau nằm ở cách tạo nghiệm ứng viên và cách di chuyển trong không gian nghiệm. Tìm kiếm giảm dần theo nhiều lân cận tập trung khai thác nghiệm hiện tại; tìm kiếm theo lân cận biến đổi bổ sung bước xáo trộn để thoát khỏi tối ưu cục bộ; còn tìm kiếm lân cận lớn thay đổi một phần lớn hơn của nghiệm thông qua cơ chế phá hủy và sửa chữa.
+
+Quy trình tổng quát của phương pháp được minh họa trong Hình \ref{fig:chapter3-overview}. Sơ đồ cho thấy các thuật toán cải thiện nghiệm không thay đổi bản chất của mô hình bài toán, mà khác nhau ở cách tạo và tinh chỉnh nghiệm ứng viên.
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+    node distance=0.8cm,
+    every node/.style={font=\small},
+    box/.style={
+        rectangle,
+        draw,
+        rounded corners,
+        align=center,
+        fill=blue!6,
+        text width=11.0cm,
+        minimum height=0.82cm
+    },
+    method/.style={
+        rectangle,
+        draw,
+        rounded corners,
+        align=center,
+        fill=orange!10,
+        text width=3.25cm,
+        minimum height=1.05cm
+    },
+    arrow/.style={->, thick}
+]
+
+\node[box] (input) {Dữ liệu bài toán};
+\node[box, below=of input] (discrete) {Rời rạc hóa các tuyến cần phục vụ};
+\node[box, below=of discrete] (initial) {Xây dựng nghiệm ban đầu};
+
+\node[method, below=1.0cm of initial, xshift=-3.75cm] (m1)
+{Tìm kiếm giảm dần\\theo nhiều lân cận};
+
+\node[method, below=1.0cm of initial] (m2)
+{Tìm kiếm theo\\lân cận biến đổi};
+
+\node[method, below=1.0cm of initial, xshift=3.75cm] (m3)
+{Tìm kiếm\\lân cận lớn};
+
+\node[box, below=1.25cm of m2] (refine)
+{Tinh chỉnh điểm rời rạc và tối ưu lại chuyến bay};
+
+\node[box, below=of refine] (output)
+{Nghiệm tốt nhất theo mục tiêu cực tiểu hóa giá trị lớn nhất};
+
+\draw[arrow] (input) -- (discrete);
+\draw[arrow] (discrete) -- (initial);
+
+\draw[arrow] (initial.south) -- (m1.north);
+\draw[arrow] (initial.south) -- (m2.north);
+\draw[arrow] (initial.south) -- (m3.north);
+
+\draw[arrow] (m1.south) -- ([xshift=-3.4cm]refine.north);
+\draw[arrow] (m2.south) -- (refine.north);
+\draw[arrow] (m3.south) -- ([xshift=3.4cm]refine.north);
+
+\draw[arrow] (refine) -- (output);
+
+\end{tikzpicture}
+\caption{Tổng quan phương pháp trong đồ án}
+\label{fig:chapter3-overview}
+\end{figure}
+
+\section{Mô hình bài toán}
+
+\subsection{Dữ liệu đầu vào}
+
+Dữ liệu đầu vào của bài toán gồm các thành phần sau. Thành phần thứ nhất là một kho trung tâm, ký hiệu là $0$. Đây là nơi các xe tải xuất phát và cũng là nơi các xe tải quay về sau khi hoàn thành nhiệm vụ. Thành phần thứ hai là tập các điểm triển khai tiềm năng, ký hiệu là $D$. Mỗi điểm trong $D$ là một vị trí mà xe tải có thể đến để triển khai máy bay không người lái.
+
+Thành phần thứ ba là tập các đoạn tuyến cần phục vụ, ký hiệu là $R$. Mỗi đoạn tuyến $r \in R$ có hai đầu mút, một chi phí phục vụ $s_r$ và có thể được phục vụ theo một trong hai chiều. Thành phần thứ tư là số lượng xe tải cho phép sử dụng, ký hiệu là $P$. Vì mỗi xe tải mang theo một máy bay không người lái, $P$ cũng là số điểm triển khai tối đa có thể được chọn. Thành phần thứ năm là giới hạn bay của mỗi chuyến bay, ký hiệu là $L$.
+
+Ngoài ra, bài toán cần một hàm khoảng cách $c_{ij}$ giữa hai vị trí $i$ và $j$. Trong đồ án, khoảng cách này được tính theo khoảng cách Euclid từ tọa độ của các vị trí. Hàm khoảng cách được dùng để tính chi phí xe tải đi từ kho đến điểm triển khai và chi phí máy bay không người lái di chuyển giữa các điểm trong một chuyến bay.
+
+\subsection{Dữ liệu đầu ra}
+
+Dữ liệu đầu ra là một kế hoạch phục vụ đầy đủ. Kế hoạch này bao gồm tập các điểm triển khai được chọn, tập các chuyến bay tại từng điểm triển khai và thứ tự phục vụ các đoạn tuyến trong mỗi chuyến bay. Mỗi chuyến bay phải bắt đầu tại một điểm triển khai, phục vụ một số đoạn tuyến, sau đó quay lại đúng điểm triển khai ban đầu.
+
+Một nghiệm đầu ra cần cho biết đoạn tuyến nào được phục vụ bởi chuyến bay nào. Đồng thời, nghiệm cũng cần xác định hướng phục vụ của từng đoạn tuyến trong mỗi chuyến bay. Hướng phục vụ ảnh hưởng đến chi phí vì sau khi hoàn thành một đoạn tuyến, vị trí kết thúc của máy bay không người lái sẽ quyết định chi phí di chuyển đến đoạn tuyến tiếp theo.
+
+\subsection{Các giả thiết của bài toán}
+
+Đồ án sử dụng các giả thiết sau. Thứ nhất, mỗi xe tải chỉ được gán với nhiều nhất một điểm triển khai. Khi một điểm triển khai được chọn, xe tải đi từ kho đến điểm đó và quay về kho sau khi hoàn thành nhiệm vụ. Chi phí xe tải tương ứng với điểm triển khai $d$ được tính là $2c_{0d}$.
+
+Thứ hai, mỗi chuyến bay của máy bay không người lái phải bắt đầu và kết thúc tại cùng một điểm triển khai. Tổng chi phí của chuyến bay không được vượt quá giới hạn $L$. Đây là ràng buộc phản ánh giới hạn pin hoặc thời lượng bay của máy bay không người lái.
+
+Thứ ba, mỗi đoạn tuyến yêu cầu phải được phục vụ đúng một lần trong nghiệm. Giả thiết này giúp tránh việc tính trùng chi phí phục vụ và làm rõ trách nhiệm của từng chuyến bay. Thứ tư, các xe tải và máy bay không người lái hoạt động song song. Do đó, thời gian hoàn thành toàn bộ kế hoạch được quyết định bởi điểm triển khai có tổng chi phí lớn nhất.
+
+\subsection{Ký hiệu sử dụng}
+
+Các ký hiệu chính được sử dụng trong mô hình được trình bày trong Bảng \ref{tab:chapter3-notation}. Cách trình bày này giúp thống nhất các công thức về hàm mục tiêu và ràng buộc ở các phần tiếp theo.
+
+\begin{table}[H]
+\centering
+\caption{Một số ký hiệu chính của bài toán}
+\label{tab:chapter3-notation}
+
+\renewcommand{\arraystretch}{1.25}
+\begin{tabular}{@{}>{\raggedright\arraybackslash}p{3.0cm}
+                >{\raggedright\arraybackslash}p{10.5cm}@{}}
+\toprule
+\textbf{Ký hiệu} & \textbf{Ý nghĩa} \\
+\midrule
+$0$ & Kho trung tâm, nơi xe tải xuất phát và quay về. \\
+$D$ & Tập các điểm triển khai tiềm năng. \\
+$R$ & Tập các đoạn tuyến yêu cầu cần được phục vụ. \\
+$P$ & Số lượng xe tải tối đa được sử dụng. \\
+$L$ & Giới hạn chi phí của một chuyến bay. \\
+$c_{ij}$ & Chi phí di chuyển trực tiếp giữa hai vị trí $i$ và $j$. \\
+$s_r$ & Chi phí phục vụ đoạn tuyến $r \in R$. \\
+$D'$ & Tập các điểm triển khai được chọn trong một nghiệm. \\
+$F_d$ & Tập các chuyến bay xuất phát từ điểm triển khai $d$. \\
+$q$ & Một chuyến bay của máy bay không người lái. \\
+$c(q)$ & Tổng chi phí của chuyến bay $q$. \\
+$C(d)$ & Tổng chi phí gắn với điểm triển khai $d$. \\
+$Z$ & Giá trị hàm mục tiêu của nghiệm. \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Hàm mục tiêu}
+
+Với một điểm triển khai $d \in D'$, gọi $F_d$ là tập các chuyến bay được thực hiện từ điểm đó. Chi phí hoàn thành tại điểm triển khai $d$ gồm chi phí xe tải đi từ kho đến $d$ và quay lại, cộng với tổng chi phí các chuyến bay tại $d$:
+\begin{equation}
+    C(d) = 2c_{0d} + \sum_{q \in F_d} c(q).
+    \label{eq:chapter3-route-cost}
+\end{equation}
+
+Vì các xe tải và máy bay không người lái có thể hoạt động song song, thời gian hoàn thành toàn bộ kế hoạch phụ thuộc vào điểm triển khai có chi phí lớn nhất. Do đó, giá trị của một nghiệm được xác định bởi:
+\begin{equation}
+    Z = \max_{d \in D'} C(d).
+    \label{eq:chapter3-solution-cost}
+\end{equation}
+
+Mục tiêu của bài toán là tìm nghiệm hợp lệ sao cho $Z$ nhỏ nhất:
+\begin{equation}
+    \min Z = \min \max_{d \in D'} \left(2c_{0d} + \sum_{q \in F_d} c(q)\right).
+    \label{eq:chapter3-objective}
+\end{equation}
+
+Hàm mục tiêu trong Công thức \eqref{eq:chapter3-objective} thể hiện yêu cầu cân bằng tải giữa các điểm triển khai. Một nghiệm tốt không chỉ có tổng chi phí thấp, mà còn cần tránh để một điểm triển khai phải đảm nhận quá nhiều nhiệm vụ so với các điểm còn lại.
+
+\subsection{Các ràng buộc}
+
+Trước hết, số điểm triển khai được chọn không được vượt quá số xe tải cho phép:
+\begin{equation}
+    |D'| \leq P.
+    \label{eq:chapter3-truck-limit}
+\end{equation}
+
+Tiếp theo, mỗi chuyến bay phải thỏa mãn giới hạn bay. Với mọi điểm triển khai $d \in D'$ và mọi chuyến bay $q \in F_d$, ta có:
+\begin{equation}
+    c(q) \leq L.
+    \label{eq:chapter3-flight-limit}
+\end{equation}
+
+Mọi đoạn tuyến yêu cầu phải được phục vụ đúng một lần. Nếu ký hiệu $R(q)$ là tập các đoạn tuyến được phục vụ trong chuyến bay $q$, điều kiện bao phủ được viết như sau:
+\begin{equation}
+    \bigcup_{d \in D'} \bigcup_{q \in F_d} R(q) = R.
+    \label{eq:chapter3-coverage}
+\end{equation}
+
+Đồng thời, các tập đoạn tuyến được phục vụ bởi hai chuyến bay khác nhau không được giao nhau:
+\begin{equation}
+    R(q_1) \cap R(q_2) = \varnothing, \quad \forall q_1 \neq q_2.
+    \label{eq:chapter3-unique-service}
+\end{equation}
+
+Cuối cùng, mỗi chuyến bay phải là một hành trình khép kín tại điểm triển khai của nó. Nghĩa là nếu chuyến bay $q$ thuộc $F_d$, thì điểm bắt đầu và điểm kết thúc của $q$ đều là $d$.
+
+\section{Biểu diễn nghiệm}
+
+Một nghiệm được biểu diễn theo cấu trúc phân cấp. Mức thứ nhất là tập các điểm triển khai được chọn. Mức thứ hai là tập các chuyến bay tại từng điểm triển khai. Mức thứ ba là thứ tự các đoạn tuyến được phục vụ trong mỗi chuyến bay. Với mỗi đoạn tuyến trong một chuyến bay, nghiệm cũng lưu hướng phục vụ của đoạn tuyến đó.
+
+Giả sử một chuyến bay $q$ tại điểm triển khai $d$ phục vụ lần lượt các đoạn tuyến $r_1,r_2,\ldots,r_m$. Với mỗi đoạn tuyến $r_i$, máy bay không người lái đi vào tại một đầu mút $a_i$ và rời khỏi tại đầu mút còn lại $b_i$. Khi đó, chi phí chuyến bay có thể được mô tả như sau:
+\begin{equation}
+    c(q) = c_{d a_1} + \sum_{i=1}^{m} s_{r_i} + \sum_{i=1}^{m-1} c_{b_i a_{i+1}} + c_{b_m d}.
+    \label{eq:chapter3-flight-cost}
+\end{equation}
+
+Công thức \eqref{eq:chapter3-flight-cost} cho thấy chi phí chuyến bay phụ thuộc vào ba yếu tố: chi phí đi từ điểm triển khai đến đoạn tuyến đầu tiên, chi phí phục vụ các đoạn tuyến, và chi phí di chuyển giữa các đoạn tuyến cũng như quay lại điểm triển khai. Do đó, cùng một tập đoạn tuyến nhưng thứ tự và hướng phục vụ khác nhau có thể tạo ra chi phí khác nhau.
+
+Hình \ref{fig:chapter3-solution-structure} minh họa cấu trúc phân cấp của một nghiệm.
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+    node distance=0.95cm,
+    every node/.style={font=\small},
+    box/.style={
+        rectangle,
+        draw,
+        rounded corners,
+        align=center,
+        fill=blue!6,
+        text width=3.2cm,
+        minimum height=0.8cm
+    },
+    leaf/.style={
+        rectangle,
+        draw,
+        rounded corners,
+        align=center,
+        fill=green!8,
+        text width=2.8cm,
+        minimum height=0.75cm
+    },
+    arrow/.style={->, thick, shorten >=2pt, shorten <=2pt}
+]
+
+\node[box] (sol) {Nghiệm};
+
+\node[box, below=1.05cm of sol, xshift=-3.4cm] (d1)
+{Điểm triển khai $d_1$};
+
+\node[box, below=1.05cm of sol, xshift=3.4cm] (d2)
+{Điểm triển khai $d_2$};
+
+\node[leaf, below=1.10cm of d1, xshift=-1.75cm] (q11)
+{Chuyến bay $q_{11}$};
+
+\node[leaf, below=1.10cm of d1, xshift=1.75cm] (q12)
+{Chuyến bay $q_{12}$};
+
+\node[leaf, below=1.10cm of d2] (q21)
+{Chuyến bay $q_{21}$};
+
+\node[leaf, below=0.95cm of q11] (r11)
+{$r_1, r_2, \ldots$};
+
+\node[leaf, below=0.95cm of q12] (r12)
+{$r_3, r_4, \ldots$};
+
+\node[leaf, below=0.95cm of q21] (r21)
+{$r_5, r_6, \ldots$};
+
+\draw[arrow] (sol.south) -- (d1.north);
+\draw[arrow] (sol.south) -- (d2.north);
+
+\draw[arrow] (d1.south) -- (q11.north);
+\draw[arrow] (d1.south) -- (q12.north);
+\draw[arrow] (d2.south) -- (q21.north);
+
+\draw[arrow] (q11.south) -- (r11.north);
+\draw[arrow] (q12.south) -- (r12.north);
+\draw[arrow] (q21.south) -- (r21.north);
+
+\end{tikzpicture}
+\caption{Cấu trúc biểu diễn nghiệm}
+\label{fig:chapter3-solution-structure}
+\end{figure}
+
+\section{Hàm đánh giá nghiệm}
+
+Hàm đánh giá nghiệm được dùng để so sánh các nghiệm trong quá trình tìm kiếm. Với mỗi nghiệm, trước hết thuật toán tính chi phí của từng chuyến bay theo Công thức \eqref{eq:chapter3-flight-cost}. Sau đó, chi phí tại từng điểm triển khai được tính theo Công thức \eqref{eq:chapter3-route-cost}. Cuối cùng, giá trị nghiệm là chi phí lớn nhất trong các điểm triển khai theo Công thức \eqref{eq:chapter3-solution-cost}.
+
+Một nghiệm không thỏa mãn các ràng buộc ở Mục 3.2.6 không được xem là nghiệm hợp lệ. Trong quá trình cải thiện, các phép biến đổi nghiệm chỉ được chấp nhận khi nghiệm thu được vẫn phục vụ đầy đủ các đoạn tuyến và mọi chuyến bay đều thỏa mãn giới hạn bay. Vì vậy, hàm đánh giá không chỉ tính giá trị mục tiêu, mà còn gắn liền với việc kiểm tra tính khả thi của nghiệm.
+
+
+
+\section{Thuật toán tìm kiếm giảm dần theo nhiều lân cận}
+
+\subsection{Ý tưởng chung}
+
+Thuật toán tìm kiếm giảm dần theo nhiều lân cận được sử dụng như một phương pháp cải thiện nghiệm theo hướng khai thác cục bộ. Từ một nghiệm ban đầu hợp lệ, thuật toán lần lượt xét nhiều kiểu biến đổi khác nhau trên nghiệm. Nếu một biến đổi tạo ra nghiệm tốt hơn, nghiệm hiện tại được cập nhật ngay và quá trình tìm kiếm quay lại từ lân cận đầu tiên. Cách tổ chức này giúp thuật toán ưu tiên các cải thiện đơn giản trước, sau đó mới chuyển sang các biến đổi phức tạp hơn khi các cải thiện trước đó không còn hiệu quả.
+
+Trong đồ án, thuật toán này còn đóng vai trò nền tảng cho hai thuật toán ở các mục sau. Các nghiệm được tạo ra bởi bước xáo trộn hoặc bởi bước phá hủy -- sửa chữa đều có thể được đưa qua thủ tục tìm kiếm giảm dần theo nhiều lân cận để tinh chỉnh lại thứ tự phục vụ, phân bố nhiệm vụ và cấu trúc các chuyến bay.
+
+\subsection{Không gian lân cận}
+
+Gọi $S$ là nghiệm hiện tại và $\mathcal{N}=(N_1,N_2,\ldots,N_h)$ là dãy các cấu trúc lân cận được xét. Mỗi $N_i(S)$ biểu diễn tập các nghiệm có thể thu được từ $S$ thông qua một kiểu thay đổi nhất định. Các kiểu thay đổi được sử dụng có thể chia thành bốn nhóm chính:
+\begin{enumerate}[leftmargin=1.2cm]
+    \item Thay đổi thứ tự phục vụ các đoạn tuyến trong cùng một chuyến bay để rút ngắn hành trình.
+    \item Loại bỏ một hoặc một số đoạn tuyến khỏi vị trí hiện tại, sau đó chèn lại vào vị trí khác có lợi hơn.
+    \item Di chuyển một chuỗi đoạn tuyến giữa các vị trí trong cùng một chuyến bay hoặc giữa hai chuyến bay khác nhau.
+    \item Hoán đổi hai nhóm đoạn tuyến nhằm cân bằng lại chi phí giữa các điểm triển khai.
+\end{enumerate}
+
+Các lân cận trên đều phải bảo toàn tính hợp lệ của nghiệm. Nói cách khác, sau mỗi phép biến đổi, toàn bộ các đoạn tuyến vẫn phải được phục vụ đúng một lần và mọi chuyến bay vẫn phải thỏa mãn giới hạn bay đã nêu ở Công thức \eqref{eq:chapter3-flight-limit}.
+
+\subsection{Cơ chế cải thiện nghiệm}
+
+Với mỗi lân cận $N_i$, thuật toán tìm một nghiệm ứng viên $S' \in N_i(S)$. Nghiệm ứng viên chỉ được chấp nhận khi nó cải thiện trực tiếp giá trị hàm mục tiêu:
+\begin{equation}
+    Z(S') < Z(S).
+    \label{eq:chapter3-vnd-improve}
+\end{equation}
+
+Nếu điều kiện \eqref{eq:chapter3-vnd-improve} được thỏa mãn, thuật toán cập nhật $S \leftarrow S'$ và đặt lại chỉ số lân cận về $i=1$. Nếu không tìm được nghiệm cải thiện trong lân cận hiện tại, thuật toán chuyển sang lân cận kế tiếp. Quá trình dừng khi tất cả các lân cận trong $\mathcal{N}$ đều không tạo ra nghiệm tốt hơn.
+
+Cơ chế này thể hiện nguyên tắc giảm dần của thuật toán: giá trị nghiệm sau mỗi lần cập nhật luôn giảm nghiêm ngặt theo hàm mục tiêu. Vì vậy, thuật toán có tính ổn định cao, nhưng cũng có thể dừng tại một nghiệm tối ưu cục bộ đối với toàn bộ dãy lân cận đang xét.
+
+\subsection{Quy trình thuật toán}
+
+Quy trình của thuật toán tìm kiếm giảm dần theo nhiều lân cận được trình bày như sau:
+\begin{enumerate}[leftmargin=1.2cm]
+    \item Khởi tạo một tập nghiệm ban đầu hợp lệ và đặt nghiệm tốt nhất $S^*$ là nghiệm có giá trị nhỏ nhất trong tập này.
+    \item Với mỗi nghiệm $S$ trong tập nghiệm ban đầu, đặt $i=1$.
+    \item Trong khi $i \leq h$, thực hiện các bước sau:
+    \begin{enumerate}[label=(\alph*), leftmargin=1.2cm]
+        \item Sinh nghiệm ứng viên $S'$ từ lân cận $N_i(S)$.
+        \item Nếu $S'$ hợp lệ và $Z(S')<Z(S)$, cập nhật $S \leftarrow S'$ và đặt lại $i=1$.
+        \item Nếu không tìm được nghiệm cải thiện, tăng $i \leftarrow i+1$.
+    \end{enumerate}
+    \item So sánh nghiệm thu được với $S^*$ và cập nhật $S^*$ nếu có cải thiện.
+    \item Chọn một số nghiệm tốt, tinh chỉnh các điểm rời rạc trên đoạn tuyến, sau đó cải thiện lại bằng cùng cơ chế lân cận.
+    \item Trả về nghiệm tốt nhất $S^*$.
+\end{enumerate}
+
+Vai trò chính của thuật toán này là tạo một mốc so sánh ổn định cho các phương pháp còn lại. Thuật toán có thời gian chạy tương đối dễ kiểm soát do chỉ chấp nhận nghiệm cải thiện, đồng thời cho thấy hiệu quả của các cấu trúc lân cận cơ bản đối với bài toán đang xét.
+
+\section{Thuật toán tìm kiếm theo lân cận biến đổi}
+
+\subsection{Ý tưởng chung}
+
+Thuật toán tìm kiếm theo lân cận biến đổi mở rộng thuật toán ở Mục 3.5 bằng cách bổ sung bước xáo trộn nghiệm. Thay vì chỉ đi theo các cải thiện cục bộ, thuật toán chủ động đưa nghiệm hiện tại sang một vùng lân cận khác, sau đó tiếp tục cải thiện nghiệm mới bằng tìm kiếm giảm dần theo nhiều lân cận. Cách tiếp cận này giúp thuật toán có khả năng thoát khỏi các nghiệm tối ưu cục bộ mà phương pháp giảm dần thông thường khó vượt qua.
+
+Trong quá trình tìm kiếm, thuật toán duy trì hai nghiệm: nghiệm hiện tại $S$ và nghiệm tốt nhất $S^*$. Nghiệm hiện tại được dùng làm điểm xuất phát cho các bước xáo trộn, còn nghiệm tốt nhất lưu lại kết quả tốt nhất đã tìm được từ đầu quá trình.
+
+\subsection{Không gian xáo trộn}
+
+Gọi $k$ là mức xáo trộn hiện tại và $k_{\max}$ là mức xáo trộn lớn nhất được phép xét. Với mỗi giá trị $k$, thuật toán tạo một nghiệm trung gian $\widetilde{S}$ từ nghiệm hiện tại $S$ bằng cách thực hiện một số thay đổi có cường độ phụ thuộc vào $k$:
+\begin{equation}
+    \widetilde{S} \in N_k(S), \quad 1 \leq k \leq k_{\max}.
+    \label{eq:chapter3-vns-shaking}
+\end{equation}
+
+Khi $k$ nhỏ, nghiệm trung gian chỉ khác nghiệm hiện tại ở một số thay đổi nhỏ, chẳng hạn di chuyển một đoạn tuyến hoặc điều chỉnh thứ tự trong một chuyến bay. Khi $k$ tăng, mức thay đổi lớn hơn, có thể liên quan đến việc chuyển nhiều đoạn tuyến giữa các chuyến bay hoặc thay đổi phân bố nhiệm vụ giữa các điểm triển khai. Nhờ đó, thuật toán có thể điều chỉnh cân bằng giữa khai thác nghiệm hiện tại và khám phá các vùng nghiệm mới.
+
+\subsection{Cơ chế chấp nhận nghiệm}
+
+Sau khi sinh nghiệm trung gian $\widetilde{S}$, thuật toán cải thiện nghiệm này bằng tìm kiếm giảm dần theo nhiều lân cận để thu được nghiệm $S'$. Nếu $S'$ tốt hơn nghiệm tốt nhất, thuật toán cập nhật ngay:
+\begin{equation}
+    S^* \leftarrow S' \quad \text{khi} \quad Z(S') < Z(S^*).
+    \label{eq:chapter3-vns-best-update}
+\end{equation}
+
+Để tránh quá bảo thủ trong quá trình tìm kiếm, thuật toán cho phép chấp nhận một số nghiệm không tốt hơn nghiệm tốt nhất nhưng vẫn nằm trong một mức sai lệch có kiểm soát. Gọi $\Delta \geq 0$ là mức sai lệch cho phép. Nghiệm $S'$ có thể được dùng làm nghiệm hiện tại nếu thỏa mãn:
+\begin{equation}
+    Z(S') \leq (1+\Delta)Z(S^*).
+    \label{eq:chapter3-vns-acceptance}
+\end{equation}
+
+Khi thuật toán tìm được nghiệm tốt hơn, mức sai lệch $\Delta$ được giảm để quá trình tìm kiếm tập trung hơn quanh các nghiệm chất lượng cao. Nếu trong nhiều vòng lặp không có cải thiện, mức lân cận $k$ được tăng lên hoặc nghiệm hiện tại được khởi động lại từ một nghiệm tốt đã lưu.
+
+\subsection{Cơ chế lưu nghiệm tốt và khởi động lại}
+
+Trong quá trình chạy, thuật toán lưu một số nghiệm tốt đã tìm được. Tập nghiệm này có hai vai trò. Thứ nhất, nó bảo vệ thuật toán khỏi việc đánh mất các nghiệm chất lượng cao khi các bước xáo trộn đưa nghiệm hiện tại sang vùng kém hơn. Thứ hai, nó cung cấp các điểm xuất phát mới khi quá trình tìm kiếm bị trì trệ.
+
+Nếu sau một số vòng lặp liên tiếp không cải thiện được $S^*$, thuật toán có thể chọn lại nghiệm hiện tại từ tập nghiệm tốt đã lưu. Cách làm này khác với việc quay về hoàn toàn từ đầu, vì nghiệm khởi động lại vẫn là nghiệm có chất lượng tương đối tốt. Nhờ đó, thuật toán vừa duy trì được tính đa dạng của tìm kiếm, vừa không làm mất quá nhiều thời gian vào các vùng nghiệm kém triển vọng.
+
+\subsection{Quy trình thuật toán}
+
+Quy trình của thuật toán tìm kiếm theo lân cận biến đổi được trình bày như sau:
+\begin{enumerate}[leftmargin=1.2cm]
+    \item Khởi tạo nghiệm hiện tại $S$, nghiệm tốt nhất $S^*$ và tập nghiệm tốt đã lưu.
+    \item Đặt mức xáo trộn ban đầu $k=1$.
+    \item Lặp cho đến khi đạt số vòng lặp tối đa:
+    \begin{enumerate}[label=(\alph*), leftmargin=1.2cm]
+        \item Tạo nghiệm trung gian $\widetilde{S}$ từ nghiệm hiện tại theo mức xáo trộn $k$.
+        \item Cải thiện $\widetilde{S}$ bằng thuật toán tìm kiếm giảm dần theo nhiều lân cận để thu được $S'$.
+        \item Nếu $S'$ tốt hơn $S^*$, cập nhật nghiệm tốt nhất, lưu $S'$ vào tập nghiệm tốt và đưa $k$ về giá trị nhỏ nhất.
+        \item Nếu $S'$ thỏa mãn điều kiện chấp nhận \eqref{eq:chapter3-vns-acceptance}, cập nhật nghiệm hiện tại $S \leftarrow S'$.
+        \item Nếu không có cải thiện, tăng mức xáo trộn hoặc khởi động lại từ một nghiệm tốt đã lưu.
+    \end{enumerate}
+    \item Cải thiện lại nghiệm tốt nhất và thực hiện pha tinh chỉnh điểm rời rạc.
+    \item Trả về nghiệm tốt nhất $S^*$.
+\end{enumerate}
+
+So với thuật toán ở Mục 3.5, thuật toán tìm kiếm theo lân cận biến đổi có khả năng khám phá không gian nghiệm rộng hơn. Bước xáo trộn giúp tạo các hướng đi mới, còn bước cải thiện cục bộ giúp đưa nghiệm sau xáo trộn về trạng thái có chất lượng tốt hơn. Vì vậy, thuật toán này phù hợp khi bài toán có nhiều tối ưu cục bộ và cần cơ chế thoát khỏi các vùng nghiệm hẹp.
+
+\section{Thuật toán tìm kiếm lân cận lớn}
+
+\subsection{Ý tưởng chung}
+
+Thuật toán tìm kiếm lân cận lớn tạo nghiệm ứng viên bằng cách thay đổi một phần đáng kể của nghiệm hiện tại. Thay vì chỉ di chuyển một đoạn tuyến hoặc hoán đổi một nhóm nhỏ các đoạn tuyến, thuật toán loại bỏ một tập đoạn tuyến khỏi nghiệm, sau đó chèn lại chúng vào những vị trí phù hợp hơn. Hai bước này được gọi là phá hủy và sửa chữa nghiệm.
+
+Cách tiếp cận này đặc biệt phù hợp với bài toán đang xét, vì một quyết định phân công không tốt ở giai đoạn đầu có thể làm nhiều chuyến bay sau đó bị mất cân bằng. Khi chỉ dùng các thay đổi nhỏ, thuật toán có thể cần rất nhiều bước mới sửa được sai lệch này. Ngược lại, phá hủy một phần nghiệm cho phép thuật toán tái tổ chức lại nhiều quyết định cùng lúc.
+
+\subsection{Cơ chế phá hủy nghiệm}
+
+Gọi $\alpha$ là tỷ lệ phá hủy, với $0 < \alpha < 1$, và $n$ là số đoạn tuyến cần phục vụ trong nghiệm hiện tại. Số đoạn tuyến được loại bỏ trong một vòng lặp được xác định bởi:
+\begin{equation}
+    r = \max\{1, \lfloor \alpha n \rfloor\}.
+    \label{eq:chapter3-lns-destroy-size}
+\end{equation}
+
+Tập đoạn tuyến bị loại bỏ được ký hiệu là $R^-$. Sau bước phá hủy, nghiệm còn lại có thể được viết dưới dạng $S \setminus R^-$. Nghiệm trung gian này chưa phải là nghiệm hoàn chỉnh vì một số đoạn tuyến chưa được phục vụ. Tuy nhiên, nó vẫn giữ lại phần cấu trúc còn tốt của nghiệm cũ, chẳng hạn các chuyến bay có chi phí thấp hoặc các phân công đã cân bằng.
+
+Trong đồ án, bước phá hủy được thực hiện theo hướng có kiểm soát: số đoạn tuyến bị loại bỏ phụ thuộc vào $\alpha$, còn nghiệm sau phá hủy vẫn được giữ ở dạng có thể sửa chữa. Điều này giúp hạn chế trường hợp thuật toán phá vỡ quá nhiều cấu trúc tốt và phải xây dựng lại gần như từ đầu.
+
+\subsection{Cơ chế sửa chữa nghiệm}
+
+Sau khi có tập $R^-$, thuật toán lần lượt chèn các đoạn tuyến trong tập này trở lại nghiệm. Với mỗi đoạn tuyến $r \in R^-$, thuật toán xét các vị trí chèn khả thi trong các chuyến bay hiện có hoặc trong chuyến bay mới tại một điểm triển khai phù hợp. Một vị trí chèn chỉ được xem là hợp lệ nếu sau khi chèn, giới hạn bay vẫn được thỏa mãn và đoạn tuyến không bị phục vụ trùng lặp.
+
+Trong số các vị trí hợp lệ, thuật toán ưu tiên vị trí làm tăng giá trị hàm mục tiêu ít nhất. Nếu ký hiệu $S \oplus (r,p)$ là nghiệm thu được khi chèn đoạn tuyến $r$ vào vị trí $p$, mức tăng do phép chèn có thể được mô tả bởi:
+\begin{equation}
+    \delta(r,p) = Z\bigl(S \oplus (r,p)\bigr) - Z(S).
+    \label{eq:chapter3-lns-insertion-delta}
+\end{equation}
+
+Vị trí chèn được chọn theo nguyên tắc:
+\begin{equation}
+    p^* = \arg\min_{p \in P(r)} \delta(r,p),
+    \label{eq:chapter3-lns-best-insertion}
+\end{equation}
+trong đó $P(r)$ là tập các vị trí chèn hợp lệ của đoạn tuyến $r$.
+
+\subsection{Cải thiện sau sửa chữa}
+
+Nghiệm sau bước sửa chữa đã phục vụ đầy đủ các đoạn tuyến, nhưng chưa chắc đã đạt trạng thái tốt nhất trong vùng lân cận của nó. Vì vậy, thuật toán tiếp tục áp dụng tìm kiếm giảm dần theo nhiều lân cận để tinh chỉnh nghiệm. Bước này có vai trò tương tự như pha tối ưu cục bộ trong thuật toán ở Mục 3.6: nó làm giảm tác động ngẫu nhiên của bước phá hủy và giúp nghiệm sau sửa chữa trở nên ổn định hơn.
+
+Nếu nghiệm sau cải thiện tốt hơn nghiệm tốt nhất đang lưu, thuật toán cập nhật nghiệm tốt nhất. Ngược lại, nghiệm hiện tại có thể tiếp tục được dùng cho vòng phá hủy -- sửa chữa kế tiếp tùy theo chất lượng nghiệm và số vòng lặp còn lại.
+
+\subsection{Quy trình thuật toán}
+
+Quy trình của thuật toán tìm kiếm lân cận lớn được trình bày như sau:
+\begin{enumerate}[leftmargin=1.2cm]
+    \item Tạo một tập nghiệm ban đầu và cải thiện các nghiệm này bằng tìm kiếm giảm dần theo nhiều lân cận.
+    \item Chọn một số nghiệm tốt nhất làm các điểm xuất phát và đặt nghiệm tốt nhất là $S^*$.
+    \item Với mỗi nghiệm xuất phát $S$, lặp cho đến khi đạt số vòng lặp tối đa:
+    \begin{enumerate}[label=(\alph*), leftmargin=1.2cm]
+        \item Xác định số đoạn tuyến cần loại bỏ theo Công thức \eqref{eq:chapter3-lns-destroy-size}.
+        \item Loại bỏ tập đoạn tuyến $R^-$ khỏi nghiệm hiện tại để thu được nghiệm chưa hoàn chỉnh.
+        \item Chèn lại từng đoạn tuyến trong $R^-$ vào vị trí hợp lệ có chi phí tăng thêm nhỏ nhất.
+        \item Cải thiện nghiệm sau sửa chữa bằng tìm kiếm giảm dần theo nhiều lân cận.
+        \item Nếu nghiệm thu được tốt hơn $S^*$, cập nhật nghiệm tốt nhất.
+    \end{enumerate}
+    \item Thực hiện pha tinh chỉnh điểm rời rạc trên các nghiệm tốt nhất thu được.
+    \item Trả về nghiệm tốt nhất $S^*$.
+\end{enumerate}
+
+Tham số $\alpha$ có ảnh hưởng trực tiếp đến hành vi của thuật toán. Khi $\alpha$ nhỏ, thuật toán chỉ thay đổi một phần hẹp của nghiệm và có xu hướng giống tìm kiếm cục bộ. Khi $\alpha$ lớn, thuật toán khám phá mạnh hơn nhưng bước sửa chữa có thể tốn nhiều thời gian và dễ làm mất các cấu trúc tốt. Vì vậy, tỷ lệ phá hủy cần được lựa chọn sao cho đủ lớn để tái cấu trúc nghiệm, nhưng không quá lớn đến mức làm quá trình sửa chữa trở nên kém ổn định.
+
+\section{Tổng kết chương}
+
+Chương này đã trình bày mô hình bài toán và phương pháp đề xuất trong đồ án. Phần mô hình bài toán đã mô tả dữ liệu đầu vào, dữ liệu đầu ra, các giả thiết, ký hiệu, hàm mục tiêu và các ràng buộc. Tiếp đó, chương trình bày cách biểu diễn nghiệm, hàm đánh giá nghiệm và ba thuật toán cải thiện nghiệm tương ứng với các Mục 3.5, 3.6 và 3.7. Những nội dung này là cơ sở để chương tiếp theo phân tích chi tiết hơn các lựa chọn thiết kế thuật toán và cách tổ chức thực nghiệm.

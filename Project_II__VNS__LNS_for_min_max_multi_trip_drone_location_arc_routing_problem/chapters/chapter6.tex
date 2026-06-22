@@ -1,0 +1,101 @@
+\chapter{KẾT LUẬN}
+\label{chap:ket-luan}
+
+\section{Kết quả đạt được}
+
+Đồ án đã nghiên cứu bài toán định tuyến cung bằng máy bay không người lái nhiều chuyến có lựa chọn điểm triển khai. Đây là một bài toán tối ưu hóa tổ hợp có cấu trúc phân cấp, trong đó nghiệm phải đồng thời quyết định các điểm triển khai được sử dụng, cách phân công các đoạn tuyến cần phục vụ cho từng điểm triển khai và cách chia các đoạn tuyến thành các chuyến bay thỏa mãn giới hạn bay. Khác với các bài toán tối ưu tổng chi phí thông thường, bài toán trong đồ án sử dụng mục tiêu cực tiểu hóa chi phí lớn nhất tại các điểm triển khai, do đó yêu cầu thuật toán phải chú ý đến sự cân bằng tải giữa các điểm triển khai.
+
+Trên cơ sở mô hình bài toán từ tài liệu nền, đồ án đã trình bày lại bài toán theo hướng phù hợp với triển khai thực nghiệm. Các thành phần chính gồm dữ liệu đầu vào, dữ liệu đầu ra, các giả thiết, ký hiệu toán học, hàm mục tiêu và các ràng buộc đã được hệ thống hóa ở Chương 3. Nghiệm được biểu diễn theo cấu trúc gồm điểm triển khai, chuyến bay và đoạn tuyến có hướng. Hàm đánh giá nghiệm được xây dựng dựa trên chi phí chuyến bay, chi phí tại từng điểm triển khai và giá trị lớn nhất trong các điểm triển khai đang được sử dụng.
+
+Đồ án đã xây dựng và phân tích ba thuật toán cải thiện nghiệm dựa trên tìm kiếm lân cận. Thuật toán tìm kiếm giảm dần theo nhiều lân cận đóng vai trò phương pháp nền tảng, tập trung khai thác nghiệm hiện tại thông qua nhiều cấu trúc lân cận. Thuật toán tìm kiếm theo lân cận biến đổi bổ sung bước xáo trộn nghiệm và cơ chế chấp nhận có kiểm soát để tăng khả năng thoát khỏi tối ưu cục bộ. Thuật toán tìm kiếm lân cận lớn sử dụng cơ chế phá hủy và sửa chữa để thay đổi một phần đáng kể của nghiệm, từ đó tái cấu trúc các quyết định phân công và thứ tự phục vụ.
+
+Bên cạnh ba thuật toán chính, đồ án cũng đã triển khai các thành phần hỗ trợ quan trọng như xây dựng tập nghiệm ban đầu, tối ưu cục bộ trong chuyến bay, kiểm tra tính khả thi, đánh giá nghiệm và tinh chỉnh điểm rời rạc. Pha tinh chỉnh điểm rời rạc có vai trò mở rộng lựa chọn hình học trên các đoạn tuyến, giúp nghiệm sau cải thiện không bị giới hạn quá nhiều bởi tập điểm rời rạc ban đầu.
+
+Các đóng góp chính của đồ án có thể tóm tắt trong Bảng \ref{tab:chapter6-contributions}.
+
+\begin{table}[H]
+\centering
+\caption{Tóm tắt các kết quả chính của đồ án}
+\label{tab:chapter6-contributions}
+\begin{tabular}{|p{4.2cm}|p{9.2cm}|}
+\hline
+\textbf{Nội dung} & \textbf{Kết quả đạt được} \\
+\hline
+Mô hình bài toán & Hệ thống hóa bài toán định tuyến cung bằng máy bay không người lái nhiều chuyến có lựa chọn điểm triển khai theo hàm mục tiêu cực tiểu hóa giá trị lớn nhất \\
+\hline
+Biểu diễn nghiệm & Xây dựng cấu trúc nghiệm gồm điểm triển khai, chuyến bay và thứ tự các đoạn tuyến có hướng \\
+\hline
+Hàm đánh giá & Thiết kế cách tính chi phí theo từng chuyến bay, từng điểm triển khai và toàn bộ nghiệm \\
+\hline
+Thuật toán cải thiện & Triển khai và phân tích ba thuật toán: tìm kiếm giảm dần theo nhiều lân cận, tìm kiếm theo lân cận biến đổi và tìm kiếm lân cận lớn \\
+\hline
+Thực nghiệm & So sánh ba thuật toán trên nhiều nhóm dữ liệu và nhiều hạt giống ngẫu nhiên, đồng thời phân tích chất lượng nghiệm và thời gian chạy \\
+\hline
+\end{tabular}
+\end{table}
+
+\section{Ý nghĩa của kết quả thực nghiệm}
+
+Các kết quả thực nghiệm ở Chương 5 cho thấy ba thuật toán có đặc điểm khác nhau rõ rệt. Thuật toán tìm kiếm giảm dần theo nhiều lân cận có thời gian chạy thấp nhất trong phần lớn trường hợp. Điều này phù hợp với thiết kế của thuật toán, vì nó chỉ chấp nhận nghiệm cải thiện và dừng khi các lân cận đang xét không còn tạo ra nghiệm tốt hơn. Do đó, thuật toán này phù hợp khi cần thu được nghiệm khả thi trong thời gian ngắn.
+
+Thuật toán tìm kiếm theo lân cận biến đổi có cơ chế tìm kiếm linh hoạt hơn nhờ bước xáo trộn nghiệm. Tuy nhiên, trong tập thực nghiệm hiện tại, thuật toán này chưa thể hiện ưu thế ổn định về chất lượng nghiệm so với hai thuật toán còn lại. Một nguyên nhân có thể là bước xáo trộn chưa đủ phù hợp với cấu trúc nút thắt cổ chai của hàm mục tiêu, hoặc chi phí cải thiện sau xáo trộn chưa được bù đắp bằng mức giảm giá trị mục tiêu tương ứng.
+
+Thuật toán tìm kiếm lân cận lớn cho kết quả tốt nhất về chất lượng nghiệm. Trên toàn bộ $80$ cấu hình dữ liệu, thuật toán này đạt độ lệch tương đối trung bình thấp nhất, thắng riêng trên $47$ cấu hình và đồng hạng tốt nhất trên $10$ cấu hình. Kết quả này cho thấy cơ chế phá hủy và sửa chữa phù hợp với bài toán đang xét, đặc biệt khi các quyết định phân công ban đầu cần được tái cấu trúc ở mức lớn hơn các phép di chuyển cục bộ thông thường.
+
+Ý nghĩa quan trọng của kết quả thực nghiệm là không có một thuật toán duy nhất tối ưu theo mọi tiêu chí. Nếu tiêu chí ưu tiên là thời gian chạy, tìm kiếm giảm dần theo nhiều lân cận là lựa chọn hợp lý. Nếu tiêu chí ưu tiên là chất lượng nghiệm, tìm kiếm lân cận lớn cho thấy ưu thế rõ rệt hơn. Vì vậy, việc lựa chọn thuật toán cần phụ thuộc vào ngữ cảnh sử dụng, quy mô dữ liệu và ngân sách thời gian cho phép.
+
+Hình \ref{fig:chapter6-summary} minh họa tóm tắt quan hệ giữa ba tiêu chí chính trong thực nghiệm: chất lượng nghiệm, thời gian chạy và mức độ tái cấu trúc nghiệm.
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+    node distance=1.2cm,
+    every node/.style={font=\small},
+    box/.style={rectangle, draw, rounded corners, align=center, text width=3.7cm, minimum height=1.0cm},
+    arrow/.style={->, thick}
+]
+\node[box, fill=green!10] (vnd) {Tìm kiếm giảm dần\theo nhiều lân cận\\Nhanh, ổn định};
+\node[box, fill=orange!12, right=1.0cm of vnd] (vns) {Tìm kiếm theo\lân cận biến đổi\\Khám phá rộng hơn};
+\node[box, fill=blue!10, right=1.0cm of vns] (lns) {Tìm kiếm\lân cận lớn\\Chất lượng nghiệm tốt};
+\node[box, fill=gray!10, below=1.2cm of vns, text width=8.8cm] (choice) {Lựa chọn thuật toán phụ thuộc vào đánh đổi giữa thời gian chạy và chất lượng nghiệm};
+\draw[arrow] (vnd) -- (vns);
+\draw[arrow] (vns) -- (lns);
+\draw[arrow] (vnd.south) -- (choice.north west);
+\draw[arrow] (vns.south) -- (choice.north);
+\draw[arrow] (lns.south) -- (choice.north east);
+\end{tikzpicture}
+\caption{Tóm tắt vai trò của ba thuật toán trong thực nghiệm}
+\label{fig:chapter6-summary}
+\end{figure}
+
+\section{Hạn chế}
+
+Mặc dù đồ án đã đạt được các mục tiêu chính, vẫn còn một số hạn chế cần được nhìn nhận rõ. Thứ nhất, thực nghiệm mới tập trung vào một số nhóm dữ liệu trong bộ dữ liệu chuẩn của bài toán. Các kết quả hiện tại phản ánh hiệu quả của thuật toán trên các cấu hình đã chạy, nhưng chưa đủ để khẳng định xu hướng trên mọi quy mô và mọi dạng cấu trúc dữ liệu.
+
+Thứ hai, số hạt giống ngẫu nhiên trong thực nghiệm chính là ba. Cách chạy này giúp đánh giá sơ bộ độ ổn định của thuật toán, nhưng vẫn còn hạn chế nếu muốn đưa ra kết luận thống kê mạnh hơn. Với các thuật toán heuristic có yếu tố ngẫu nhiên, số lần chạy nhiều hơn sẽ giúp ước lượng độ ổn định chính xác hơn.
+
+Thứ ba, việc hiệu chỉnh tham số mới được thực hiện trên một bộ dữ liệu đại diện. Các tham số như tỷ lệ phá hủy, số vòng lặp tối đa, mức xáo trộn và số nghiệm được tinh chỉnh có thể hoạt động khác nhau trên các nhóm dữ liệu khác nhau. Vì vậy, bộ tham số tốt trên một cấu hình chưa chắc là bộ tham số tốt nhất cho toàn bộ dữ liệu.
+
+Thứ tư, thuật toán tìm kiếm theo lân cận biến đổi trong đồ án đã có các cơ chế xáo trộn, chấp nhận có kiểm soát và khởi động lại, nhưng kết quả thực nghiệm chưa cho thấy ưu thế rõ ràng. Điều này cho thấy thiết kế bước xáo trộn và cách điều chỉnh mức lân cận vẫn còn dư địa cải thiện.
+
+Thứ năm, các thực nghiệm hiện mới tập trung vào giá trị mục tiêu và thời gian chạy. Một số thông tin sâu hơn như số lần từng phép biến đổi tạo cải thiện, mức thay đổi tại điểm triển khai nút thắt cổ chai, hoặc mức đóng góp riêng của pha tinh chỉnh điểm rời rạc chưa được phân tích đầy đủ trong báo cáo.
+
+\section{Hướng phát triển}
+
+Hướng phát triển đầu tiên là mở rộng quy mô thực nghiệm. Các nghiên cứu tiếp theo có thể chạy thêm nhiều nhóm dữ liệu, nhiều mức giới hạn bay, nhiều số lượng xe tải và nhiều hạt giống ngẫu nhiên hơn. Khi số lần chạy đủ lớn, có thể bổ sung các kiểm định thống kê để đánh giá mức ý nghĩa của khác biệt giữa các thuật toán.
+
+Hướng thứ hai là cải thiện thuật toán tìm kiếm theo lân cận biến đổi. Cần thiết kế các phép xáo trộn bám sát hơn vào cấu trúc của hàm mục tiêu cực đại, chẳng hạn ưu tiên tác động lên điểm triển khai đang có chi phí lớn nhất hoặc các chuyến bay nằm gần giới hạn bay. Ngoài ra, mức xáo trộn có thể được điều chỉnh thích nghi theo mức đình trệ của quá trình tìm kiếm.
+
+Hướng thứ ba là tối ưu hóa bước sửa chữa trong thuật toán tìm kiếm lân cận lớn. Do bước chèn lại các đoạn tuyến là phần tốn thời gian, có thể nghiên cứu các cách giới hạn tập vị trí ứng viên, tính nhanh chi phí tăng thêm, hoặc ưu tiên các vị trí liên quan đến điểm triển khai đang quyết định giá trị mục tiêu. Mục tiêu là giữ được chất lượng nghiệm tốt của tìm kiếm lân cận lớn trong khi giảm thời gian chạy.
+
+Hướng thứ tư là phân tích đóng góp riêng của từng thành phần thuật toán. Có thể thực hiện các thực nghiệm loại bỏ thành phần, ví dụ chạy thuật toán không có pha tinh chỉnh điểm rời rạc, không có tối ưu cục bộ trong chuyến bay, hoặc thay đổi từng nhóm lân cận. Nhóm thực nghiệm này giúp xác định thành phần nào đóng góp nhiều nhất vào chất lượng nghiệm.
+
+Hướng thứ năm là mở rộng mô hình bài toán theo các yếu tố thực tế hơn. Ví dụ, có thể xét thời gian phục vụ phụ thuộc vào loại đoạn tuyến, số lượng máy bay không người lái tại mỗi điểm triển khai, điều kiện thời tiết, hoặc giới hạn năng lượng thay đổi theo tải và môi trường bay. Những mở rộng này sẽ làm bài toán gần hơn với các kịch bản vận hành thực tế, đồng thời đặt ra yêu cầu mới cho thiết kế thuật toán.
+
+\section{Kết luận chung}
+
+Nhìn chung, đồ án đã xây dựng được một quy trình giải heuristic cho bài toán định tuyến cung bằng máy bay không người lái nhiều chuyến có lựa chọn điểm triển khai. Quy trình này bao gồm rời rạc hóa dữ liệu, xây dựng nghiệm ban đầu, cải thiện nghiệm bằng các thuật toán tìm kiếm lân cận và tinh chỉnh điểm rời rạc. Ba thuật toán được triển khai và so sánh trên cùng mô hình, cùng biểu diễn nghiệm và cùng hàm đánh giá, nhờ đó kết quả thực nghiệm có cơ sở so sánh thống nhất.
+
+Kết quả thực nghiệm cho thấy tìm kiếm lân cận lớn là hướng tiếp cận có chất lượng nghiệm tốt nhất trong phạm vi dữ liệu đã xét, trong khi tìm kiếm giảm dần theo nhiều lân cận có ưu thế về thời gian chạy. Tìm kiếm theo lân cận biến đổi cung cấp một khung khám phá nghiệm có tiềm năng, nhưng cần tiếp tục cải thiện cơ chế xáo trộn và chấp nhận nghiệm để phát huy hiệu quả rõ hơn.
+
+Các kết quả đạt được cho thấy hướng tiếp cận dựa trên tìm kiếm lân cận là phù hợp với bài toán định tuyến cung bằng máy bay không người lái nhiều chuyến có lựa chọn điểm triển khai. Đồng thời, đồ án cũng mở ra nhiều hướng phát triển tiếp theo, đặc biệt là cải thiện cơ chế tái cấu trúc nghiệm, tối ưu hóa thời gian chạy và mở rộng thực nghiệm trên nhiều điều kiện dữ liệu hơn.

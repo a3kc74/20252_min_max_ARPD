@@ -1,0 +1,277 @@
+\chapter{PHÂN TÍCH THIẾT KẾ THUẬT TOÁN}
+\label{chap:phan-tich-thiet-ke-thuat-toan}
+
+\section{Phân tích đặc điểm của bài toán}
+
+Bài toán định tuyến cung bằng máy bay không người lái nhiều chuyến có lựa chọn điểm triển khai là một bài toán tối ưu hóa tổ hợp có nhiều quyết định phụ thuộc lẫn nhau. Một nghiệm không chỉ cần xác định các đoạn tuyến được phục vụ theo thứ tự nào, mà còn phải quyết định điểm triển khai nào được sử dụng, các đoạn tuyến được phân công cho điểm triển khai nào và mỗi chuyến bay gồm những đoạn tuyến nào. Vì vậy, kích thước không gian nghiệm tăng rất nhanh khi số đoạn tuyến, số điểm triển khai tiềm năng và số xe tải cho phép tăng lên.
+
+Khó khăn đầu tiên của bài toán đến từ cấu trúc phân cấp của nghiệm. Ở mức cao, thuật toán phải chọn tập điểm triển khai. Ở mức tiếp theo, thuật toán phải phân chia các đoạn tuyến cho các điểm triển khai đã chọn. Ở mức thấp hơn, các đoạn tuyến tại mỗi điểm triển khai lại cần được chia thành nhiều chuyến bay thỏa mãn giới hạn bay. Một thay đổi nhỏ ở mức thấp, chẳng hạn đổi thứ tự hai đoạn tuyến trong một chuyến bay, có thể làm thay đổi chi phí của chuyến bay đó. Ngược lại, một thay đổi ở mức cao, chẳng hạn chuyển một nhóm đoạn tuyến sang điểm triển khai khác, có thể làm thay đổi cân bằng tải của toàn bộ nghiệm.
+
+Khó khăn thứ hai nằm ở hàm mục tiêu dạng cực tiểu hóa giá trị lớn nhất. Mục tiêu của bài toán không phải là giảm tổng chi phí của tất cả các điểm triển khai, mà là giảm chi phí lớn nhất trong các điểm triển khai đang được sử dụng. Do đó, một phép biến đổi chỉ làm giảm chi phí ở các điểm triển khai vốn đã nhẹ tải chưa chắc đã cải thiện nghiệm. Thuật toán cần tập trung nhiều hơn vào điểm triển khai đang quyết định giá trị hàm mục tiêu, đồng thời vẫn phải tránh làm tăng quá mạnh chi phí ở các điểm còn lại.
+
+Khó khăn thứ ba là ràng buộc giới hạn bay làm cho quá trình chèn, di chuyển hoặc hoán đổi đoạn tuyến không thể được đánh giá chỉ bằng khoảng cách tăng thêm. Một vị trí chèn có vẻ tốt về mặt chi phí có thể khiến chuyến bay vượt quá giới hạn bay. Ngược lại, một vị trí chèn có chi phí tăng thêm lớn hơn đôi chút nhưng giữ được tính khả thi có thể là lựa chọn cần thiết. Vì vậy, các thuật toán trong đồ án đều phải gắn thao tác cải thiện nghiệm với bước kiểm tra tính khả thi.
+
+Từ các đặc điểm trên, phương pháp thiết kế thuật toán trong đồ án cần thỏa mãn ba yêu cầu. Thứ nhất, thuật toán phải xây dựng được nghiệm ban đầu hợp lệ trong thời gian hữu hạn. Thứ hai, thuật toán phải có các phép biến đổi đủ nhỏ để tinh chỉnh thứ tự phục vụ và đủ lớn để tái cấu trúc phân công. Thứ ba, thuật toán phải có cơ chế đánh giá thống nhất để so sánh các nghiệm theo đúng hàm mục tiêu của bài toán.
+
+\section{Phân tích hàm mục tiêu và các ràng buộc}
+
+Hàm mục tiêu của đồ án được xây dựng theo đúng định hướng cực tiểu hóa chi phí lớn nhất tại các điểm triển khai. Với một nghiệm $S$, giá trị nghiệm được ký hiệu là $Z(S)$ và được tính bởi:
+\begin{equation}
+    Z(S) = \max_{d \in D'} C_d(S),
+    \label{eq:chapter4-objective-analysis}
+\end{equation}
+trong đó $D'$ là tập điểm triển khai được chọn và $C_d(S)$ là chi phí gắn với điểm triển khai $d$ trong nghiệm $S$.
+
+Chi phí $C_d(S)$ gồm chi phí xe tải đi từ kho trung tâm đến điểm triển khai và quay về, cộng với tổng chi phí các chuyến bay xuất phát từ điểm triển khai đó. Nếu ký hiệu $F_d$ là tập các chuyến bay tại $d$, chi phí này được viết như sau:
+\begin{equation}
+    C_d(S) = 2c_{0d} + \sum_{q \in F_d} c(q).
+    \label{eq:chapter4-launch-cost-analysis}
+\end{equation}
+
+Cách đánh giá này làm cho thuật toán có xu hướng cân bằng tải giữa các điểm triển khai. Nếu một điểm triển khai đang có chi phí lớn nhất, việc giảm chi phí tại điểm đó có thể trực tiếp cải thiện giá trị nghiệm. Ngược lại, việc cải thiện một điểm triển khai không phải nút thắt cổ chai chỉ có ý nghĩa khi nó tạo điều kiện cho các phép chuyển đổi sau đó. Đây là lý do các phép tìm kiếm cục bộ cần quan tâm đến cả chi phí cục bộ của từng chuyến bay và giá trị lớn nhất trên toàn nghiệm.
+
+Các ràng buộc chính của bài toán có thể được nhóm thành ba loại. Nhóm thứ nhất là ràng buộc bao phủ: mọi đoạn tuyến yêu cầu phải được phục vụ đúng một lần. Nhóm thứ hai là ràng buộc giới hạn bay: chi phí của từng chuyến bay không được vượt quá giới hạn cho trước. Nhóm thứ ba là ràng buộc số điểm triển khai: số điểm triển khai được sử dụng không được vượt quá số xe tải cho phép. Bảng \ref{tab:chapter4-constraints} tóm tắt vai trò của từng nhóm ràng buộc trong thiết kế thuật toán.
+
+\begin{table}[H]
+\centering
+\caption{Vai trò của các nhóm ràng buộc trong thiết kế thuật toán}
+\label{tab:chapter4-constraints}
+\begin{tabular}{|p{3.6cm}|p{5.0cm}|p{5.0cm}|}
+\hline
+\textbf{Nhóm ràng buộc} & \textbf{Ý nghĩa} & \textbf{Tác động đến thuật toán} \\
+\hline
+Bao phủ đoạn tuyến & Mỗi đoạn tuyến yêu cầu phải được phục vụ đúng một lần & Các phép loại bỏ, chèn lại, di chuyển và hoán đổi phải bảo toàn tập đoạn tuyến được phục vụ \\
+\hline
+Giới hạn bay & Mỗi chuyến bay phải có chi phí không vượt quá giới hạn cho phép & Mọi vị trí chèn hoặc thay đổi thứ tự phải được kiểm tra tính khả thi trước khi chấp nhận \\
+\hline
+Số điểm triển khai & Số điểm triển khai được chọn không vượt quá số xe tải & Giai đoạn xây dựng nghiệm và các phép tái phân công phải kiểm soát số điểm triển khai đang hoạt động \\
+\hline
+Hàm mục tiêu cực đại & Giá trị nghiệm là chi phí lớn nhất trong các điểm triển khai & Các phép cải thiện nên ưu tiên điểm triển khai đang tạo ra giá trị lớn nhất \\
+\hline
+\end{tabular}
+\end{table}
+
+\section{Phân tích thiết kế nghiệm và hàm đánh giá}
+
+Thiết kế nghiệm trong đồ án được lựa chọn theo cấu trúc phân cấp gồm ba tầng: điểm triển khai, chuyến bay và đoạn tuyến. Cách biểu diễn này phù hợp với bản chất của bài toán vì mỗi điểm triển khai có thể quản lý nhiều chuyến bay, trong khi mỗi chuyến bay lại phục vụ một dãy đoạn tuyến có hướng. Nhờ cấu trúc này, thuật toán có thể đánh giá riêng từng chuyến bay, từng điểm triển khai và toàn bộ nghiệm.
+
+Ở tầng chuyến bay, thứ tự và hướng phục vụ của các đoạn tuyến là hai yếu tố quan trọng. Với cùng một tập đoạn tuyến, nếu thay đổi hướng phục vụ hoặc thứ tự đi qua các đoạn tuyến, chi phí chuyến bay có thể thay đổi. Vì vậy, thuật toán cần có bước tối ưu cục bộ trong từng chuyến bay để giảm chi phí hành trình mà không làm thay đổi phân công ở các tầng cao hơn.
+
+Ở tầng điểm triển khai, giá trị cần quan tâm là tổng chi phí của xe tải và các chuyến bay gắn với điểm triển khai đó. Đây là tầng trực tiếp quyết định hàm mục tiêu dạng cực đại. Khi một điểm triển khai có chi phí lớn nhất, thuật toán có thể cải thiện nghiệm bằng hai hướng: giảm chi phí nội bộ của các chuyến bay tại điểm đó, hoặc chuyển một phần nhiệm vụ sang điểm triển khai khác nếu vẫn bảo đảm tính khả thi.
+
+Quy trình đánh giá nghiệm được thiết kế theo ba bước như Hình \ref{fig:chapter4-evaluation-flow}. Trước hết, thuật toán tính chi phí từng chuyến bay. Sau đó, thuật toán cộng các chuyến bay theo từng điểm triển khai và cộng thêm chi phí xe tải. Cuối cùng, thuật toán lấy giá trị lớn nhất trong các điểm triển khai làm giá trị của nghiệm.
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+    node distance=0.9cm,
+    every node/.style={font=\small},
+    box/.style={rectangle, draw, rounded corners, align=center, fill=blue!6, text width=10.8cm, minimum height=0.8cm},
+    arrow/.style={->, thick}
+]
+\node[box] (flight) {Tính chi phí từng chuyến bay $c(q)$};
+\node[box, below=of flight] (launch) {Tính chi phí tại từng điểm triển khai $C_d(S)=2c_{0d}+\sum_{q\in F_d}c(q)$};
+\node[box, below=of launch] (objective) {Tính giá trị nghiệm $Z(S)=\max_{d\in D'}C_d(S)$};
+\node[box, below=of objective, fill=green!8] (feasible) {Kiểm tra bao phủ đoạn tuyến, giới hạn bay và số điểm triển khai};
+\draw[arrow] (flight) -- (launch);
+\draw[arrow] (launch) -- (objective);
+\draw[arrow] (objective) -- (feasible);
+\end{tikzpicture}
+\caption{Quy trình đánh giá nghiệm}
+\label{fig:chapter4-evaluation-flow}
+\end{figure}
+
+Một ưu điểm của cách thiết kế này là các phép biến đổi cục bộ có thể được đánh giá trên phần bị ảnh hưởng trước, sau đó mới cập nhật giá trị toàn cục. Ví dụ, khi thay đổi thứ tự trong một chuyến bay, chỉ chi phí của chuyến bay đó và chi phí của điểm triển khai tương ứng thay đổi. Khi chuyển một đoạn tuyến giữa hai điểm triển khai, chỉ hai điểm triển khai liên quan cần được tính lại. Điều này giúp giảm thời gian đánh giá so với việc xây dựng lại toàn bộ nghiệm từ đầu sau mỗi phép biến đổi.
+
+\section{Phân tích thiết kế xây dựng nghiệm ban đầu}
+
+Giai đoạn xây dựng nghiệm ban đầu có nhiệm vụ tạo ra các nghiệm hợp lệ để làm điểm xuất phát cho các thuật toán cải thiện. Trong đồ án, nghiệm ban đầu được xây dựng theo hướng tham lam có ngẫu nhiên có kiểm soát. Các đoạn tuyến được gán cho điểm triển khai dựa trên khoảng cách tới điểm triển khai và khả năng tạo chuyến bay khả thi. Sau đó, tại mỗi điểm triển khai, các đoạn tuyến được sắp thành một hành trình lớn rồi chia thành các chuyến bay nhỏ thỏa mãn giới hạn bay.
+
+Việc sử dụng nhiều nghiệm ban đầu thay vì một nghiệm duy nhất có vai trò quan trọng. Do bài toán có nhiều tối ưu cục bộ, một điểm xuất phát kém có thể làm thuật toán cải thiện bị giới hạn trong một vùng nghiệm hẹp. Khi có một tập nghiệm ban đầu đa dạng, các thuật toán có thêm cơ hội tiếp cận nhiều vùng nghiệm khác nhau trước khi chọn các nghiệm tốt nhất để cải thiện sâu hơn.
+
+Quy trình xây dựng nghiệm ban đầu gồm các bước chính sau:
+\begin{enumerate}[leftmargin=1.2cm]
+    \item Chọn một tập điểm triển khai không vượt quá số xe tải cho phép.
+    \item Phân công mỗi đoạn tuyến cho một điểm triển khai phù hợp, ưu tiên các điểm triển khai gần đoạn tuyến và có khả năng tạo chuyến bay khả thi.
+    \item Tại mỗi điểm triển khai, sắp xếp các đoạn tuyến thành một dãy phục vụ ban đầu.
+    \item Chia dãy phục vụ thành các chuyến bay sao cho mỗi chuyến bay thỏa mãn giới hạn bay.
+    \item Đánh giá nghiệm và chỉ giữ lại các nghiệm hợp lệ.
+\end{enumerate}
+
+Cách xây dựng này không nhằm tìm nghiệm tối ưu ngay từ đầu, mà nhằm tạo ra các nghiệm đủ tốt và đủ đa dạng cho giai đoạn cải thiện. Sự đa dạng ở giai đoạn đầu đặc biệt hữu ích cho thuật toán tìm kiếm theo lân cận biến đổi và thuật toán tìm kiếm lân cận lớn, vì hai thuật toán này có thể khai thác các điểm xuất phát khác nhau để tránh phụ thuộc quá nhiều vào một cấu trúc nghiệm duy nhất.
+
+\section{Phân tích thiết kế các phép biến đổi lân cận}
+
+Các phép biến đổi lân cận là thành phần trung tâm của cả ba thuật toán trong đồ án. Mỗi phép biến đổi tạo ra một nghiệm ứng viên bằng cách thay đổi một phần nghiệm hiện tại. Để phù hợp với cấu trúc bài toán, các phép biến đổi được thiết kế ở nhiều mức khác nhau: trong một chuyến bay, giữa các chuyến bay tại cùng điểm triển khai và giữa các điểm triển khai khác nhau.
+
+Phép biến đổi thứ nhất là tối ưu trong một chuyến bay. Phép biến đổi này giữ nguyên tập đoạn tuyến của chuyến bay nhưng thay đổi thứ tự hoặc hướng phục vụ nhằm giảm chi phí chuyến bay. Đây là phép biến đổi có phạm vi nhỏ, thường có chi phí đánh giá thấp và phù hợp để tinh chỉnh nghiệm sau các thay đổi lớn.
+
+Phép biến đổi thứ hai là di chuyển đoạn tuyến. Một đoạn tuyến được lấy khỏi vị trí hiện tại và chèn vào vị trí khác. Vị trí mới có thể nằm trong cùng chuyến bay, trong chuyến bay khác hoặc tại một điểm triển khai khác. Phép biến đổi này giúp sửa các quyết định phân công chưa tốt, đặc biệt khi một điểm triển khai đang chịu tải lớn hơn các điểm còn lại.
+
+Phép biến đổi thứ ba là loại bỏ và chèn lại một nhóm đoạn tuyến. Đây là phép biến đổi mạnh hơn di chuyển đơn lẻ vì nó cho phép thuật toán thay đổi đồng thời nhiều quyết định. Cơ chế này được sử dụng rõ nhất trong thuật toán tìm kiếm lân cận lớn, nơi một tỷ lệ đoạn tuyến được loại bỏ khỏi nghiệm rồi được chèn lại theo nguyên tắc chi phí tăng thêm nhỏ nhất.
+
+Phép biến đổi thứ tư là hoán đổi hai nhóm đoạn tuyến. Phép biến đổi này hữu ích khi hai chuyến bay hoặc hai điểm triển khai có thể trao đổi nhiệm vụ để giảm chi phí lớn nhất. Tuy nhiên, do phải kiểm tra tính khả thi cho cả hai phía sau khi hoán đổi, phép biến đổi này thường tốn thời gian hơn so với các phép thay đổi nhỏ.
+
+Bảng \ref{tab:chapter4-neighborhoods} tóm tắt vai trò của các nhóm phép biến đổi trong thiết kế thuật toán.
+
+\begin{table}[H]
+\centering
+\caption{Các nhóm phép biến đổi lân cận}
+\label{tab:chapter4-neighborhoods}
+\begin{tabular}{|p{3.8cm}|p{4.8cm}|p{4.8cm}|}
+\hline
+\textbf{Nhóm phép biến đổi} & \textbf{Phạm vi tác động} & \textbf{Vai trò trong tìm kiếm} \\
+\hline
+Tối ưu trong chuyến bay & Một chuyến bay & Giảm chi phí hành trình mà không đổi phân công đoạn tuyến \\
+\hline
+Di chuyển đoạn tuyến & Một hoặc hai chuyến bay & Sửa vị trí phục vụ chưa tốt và cân bằng lại tải \\
+\hline
+Loại bỏ và chèn lại & Một phần nghiệm & Tái cấu trúc nghiệm sau khi phá hủy có kiểm soát \\
+\hline
+Hoán đổi nhóm đoạn tuyến & Hai chuyến bay hoặc hai điểm triển khai & Tạo thay đổi mạnh để thoát khỏi cấu trúc cục bộ kém \\
+\hline
+Tinh chỉnh điểm rời rạc & Các điểm trên đoạn tuyến được phục vụ & Mở rộng lựa chọn hình học và cải thiện chi phí chuyến bay \\
+\hline
+\end{tabular}
+\end{table}
+
+\section{Phân tích thiết kế ba thuật toán cải thiện nghiệm}
+
+Ba thuật toán được sử dụng trong đồ án có cùng nền tảng biểu diễn nghiệm và hàm đánh giá, nhưng khác nhau ở cách tạo nghiệm ứng viên và cách điều khiển quá trình tìm kiếm. Sự khác nhau này tạo ra ba mức cân bằng giữa khai thác và khám phá.
+
+Thuật toán tìm kiếm giảm dần theo nhiều lân cận thiên về khai thác. Thuật toán chỉ chấp nhận nghiệm cải thiện và quay lại lân cận đầu tiên sau mỗi lần cải thiện. Thiết kế này giúp quá trình tìm kiếm ổn định, dễ theo dõi và thường cho kết quả tốt trong thời gian ngắn. Tuy nhiên, do không chấp nhận nghiệm kém hơn, thuật toán có thể dừng tại tối ưu cục bộ.
+
+Thuật toán tìm kiếm theo lân cận biến đổi bổ sung bước xáo trộn và cơ chế chấp nhận có kiểm soát. Mức xáo trộn $k$ cho phép thuật toán thay đổi cường độ tác động lên nghiệm. Khi nghiệm mới sau xáo trộn và cải thiện nằm trong mức sai lệch cho phép so với nghiệm tốt nhất, thuật toán có thể chấp nhận nghiệm đó để tiếp tục khám phá. Thiết kế này giúp tăng khả năng thoát khỏi tối ưu cục bộ, nhưng thời gian chạy có thể lớn hơn do mỗi vòng lặp thường cần thêm bước cải thiện cục bộ.
+
+Thuật toán tìm kiếm lân cận lớn tạo nghiệm ứng viên bằng cơ chế phá hủy và sửa chữa. Với tỷ lệ phá hủy $\alpha$, thuật toán loại bỏ một phần các đoạn tuyến khỏi nghiệm, sau đó chèn lại chúng vào các vị trí hợp lệ có chi phí tăng thêm thấp. Thiết kế này cho phép tái cấu trúc nghiệm ở mức lớn hơn so với các phép lân cận thông thường. Tuy nhiên, nếu $\alpha$ quá lớn, bước sửa chữa có thể tốn nhiều thời gian; nếu $\alpha$ quá nhỏ, thuật toán có thể không đủ khả năng thoát khỏi vùng nghiệm cục bộ.
+
+Hình \ref{fig:chapter4-algorithm-relation} minh họa quan hệ giữa ba thuật toán. Tìm kiếm giảm dần theo nhiều lân cận đóng vai trò thủ tục cải thiện nền tảng. Hai thuật toán còn lại sử dụng thêm cơ chế tạo nhiễu hoặc tái cấu trúc nghiệm trước khi quay lại bước cải thiện cục bộ.
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+    node distance=1.0cm,
+    every node/.style={font=\small},
+    box/.style={
+        rectangle,
+        draw,
+        rounded corners,
+        align=center,
+        fill=blue!6,
+        text width=4.0cm,
+        minimum height=0.95cm
+    },
+    wide/.style={
+        rectangle,
+        draw,
+        rounded corners,
+        align=center,
+        fill=green!8,
+        text width=10.6cm,
+        minimum height=0.85cm
+    },
+    arrow/.style={->, thick}
+]
+
+\node[wide] (initial) {Nghiệm ban đầu hợp lệ};
+
+\node[box, below=1.0cm of initial] (vnd)
+{Tìm kiếm giảm dần\\theo nhiều lân cận};
+
+\node[box, below=1.0cm of vnd, xshift=-3.2cm, fill=orange!10] (vns)
+{Xáo trộn nghiệm\\và cải thiện lại};
+
+\node[box, below=1.0cm of vnd, xshift=3.2cm, fill=orange!10] (lns)
+{Phá hủy -- sửa chữa\\và cải thiện lại};
+
+\node[wide, below=2.2cm of vnd] (split)
+{Tinh chỉnh điểm rời rạc và chọn nghiệm tốt nhất};
+
+\draw[arrow] (initial) -- (vnd);
+\draw[arrow] (vnd) -- (split);
+
+\draw[arrow] (initial.south) -- ++(0,-0.35) -| (vns.north);
+\draw[arrow] (initial.south) -- ++(0,-0.35) -| (lns.north);
+
+\draw[arrow] (vns.south) -- ([xshift=-3.0cm]split.north);
+\draw[arrow] (lns.south) -- ([xshift=3.0cm]split.north);
+
+\end{tikzpicture}
+\caption{Quan hệ thiết kế giữa ba thuật toán cải thiện nghiệm}
+\label{fig:chapter4-algorithm-relation}
+\end{figure}
+
+\section{Phân tích thiết kế pha tinh chỉnh điểm rời rạc}
+
+Do bài toán gốc có yếu tố liên tục trên các đoạn tuyến, đồ án sử dụng cách tiếp cận rời rạc hóa để đưa bài toán về dạng hữu hạn. Tuy nhiên, nếu chỉ dùng một tập điểm rời rạc ban đầu quá thưa, nghiệm thu được có thể bị giới hạn bởi các lựa chọn hình học chưa đủ tốt. Vì vậy, sau khi có các nghiệm triển vọng, thuật toán thực hiện pha tinh chỉnh điểm rời rạc.
+
+Ý tưởng của pha này là bổ sung thêm các điểm trung gian trên các đoạn tuyến, chuyển nghiệm hiện tại sang phiên bản rời rạc mịn hơn, sau đó cải thiện lại nghiệm. Nếu việc bổ sung điểm trung gian giúp giảm giá trị hàm mục tiêu, nghiệm mới được giữ lại. Nếu không có cải thiện, quá trình tinh chỉnh dừng để tránh làm tăng kích thước bài toán không cần thiết.
+
+Quy trình tinh chỉnh gồm hai giai đoạn. Ở giai đoạn đầu, thuật toán thêm điểm giữa vào các khoảng rời rạc hiện có để mở rộng khả năng lựa chọn. Ở các giai đoạn sau, thuật toán chỉ tiếp tục tinh chỉnh quanh những điểm trung gian thật sự được sử dụng trong nghiệm tốt. Cách làm này giúp tập trung độ mịn vào các vùng có ảnh hưởng đến nghiệm, thay vì tăng đều kích thước toàn bộ bài toán.
+
+Thiết kế này tạo ra sự cân bằng giữa chất lượng nghiệm và thời gian chạy. Nếu tinh chỉnh quá ít, thuật toán có thể bỏ lỡ các hành trình tốt hơn. Nếu tinh chỉnh quá nhiều, số lựa chọn tăng lên làm các phép chèn, hoán đổi và tối ưu chuyến bay tốn thời gian hơn. Vì vậy, pha tinh chỉnh chỉ được áp dụng cho một số nghiệm tốt nhất thay vì toàn bộ tập nghiệm ban đầu.
+
+\section{Phân tích tham số thuật toán}
+
+Các tham số thuật toán ảnh hưởng trực tiếp đến chất lượng nghiệm và thời gian chạy. Trong đồ án, các tham số được thiết kế theo hướng dễ kiểm soát và có ý nghĩa rõ ràng. Bảng \ref{tab:chapter4-parameters} trình bày các tham số chính và vai trò của chúng.
+
+\begin{table}[H]
+\centering
+\caption{Các tham số chính trong thiết kế thuật toán}
+\label{tab:chapter4-parameters}
+\begin{tabular}{|p{3.5cm}|p{4.2cm}|p{5.8cm}|}
+\hline
+\textbf{Tham số} & \textbf{Thuật toán liên quan} & \textbf{Vai trò} \\
+\hline
+Số nghiệm ban đầu & Cả ba thuật toán & Điều khiển mức đa dạng của các điểm xuất phát \\
+\hline
+Số nghiệm tốt được tinh chỉnh & Cả ba thuật toán & Giới hạn số nghiệm được đưa vào pha tinh chỉnh điểm rời rạc \\
+\hline
+Số vòng lặp tối đa & Tìm kiếm theo lân cận biến đổi, tìm kiếm lân cận lớn & Kiểm soát thời gian tìm kiếm và mức độ khám phá \\
+\hline
+Mức xáo trộn lớn nhất $k_{\max}$ & Tìm kiếm theo lân cận biến đổi & Điều khiển cường độ thay đổi nghiệm khi thoát khỏi tối ưu cục bộ \\
+\hline
+Mức sai lệch cho phép $\Delta$ & Tìm kiếm theo lân cận biến đổi & Cho phép chấp nhận nghiệm không tốt hơn nhưng vẫn gần nghiệm tốt nhất \\
+\hline
+Tỷ lệ phá hủy $\alpha$ & Tìm kiếm lân cận lớn & Quyết định số đoạn tuyến bị loại bỏ và chèn lại trong mỗi vòng lặp \\
+\hline
+Giới hạn thời gian & Cả ba thuật toán & Bảo đảm thuật toán dừng trong thời gian thực nghiệm cho phép \\
+\hline
+\end{tabular}
+\end{table}
+
+Việc lựa chọn tham số cần phụ thuộc vào quy mô dữ liệu. Với bộ dữ liệu nhỏ, thuật toán có thể dùng nhiều nghiệm ban đầu và nhiều vòng lặp hơn để tăng chất lượng nghiệm. Với bộ dữ liệu lớn, cần ưu tiên giới hạn thời gian, giảm số nghiệm được tinh chỉnh và chọn các phép biến đổi có chi phí đánh giá thấp. Đây cũng là lý do phần thực nghiệm cần so sánh các thuật toán trên nhiều cấu hình dữ liệu khác nhau.
+
+\section{Phân tích độ phức tạp tính toán}
+
+Các thuật toán trong đồ án là các thuật toán heuristic, do đó độ phức tạp tính toán phụ thuộc vào số vòng lặp, số phép biến đổi được thử và chi phí đánh giá nghiệm. Gọi $n$ là số đoạn tuyến yêu cầu, $p$ là số điểm triển khai được chọn, $I$ là số vòng lặp cải thiện và $h$ là số cấu trúc lân cận được xét.
+
+Một lần đánh giá đầy đủ một nghiệm có thể được chặn trên bởi $O(n+p)$ nếu mỗi đoạn tuyến và mỗi điểm triển khai được quét một lần. Tuy nhiên, trong quá trình tìm kiếm cục bộ, nhiều phép biến đổi chỉ ảnh hưởng đến một hoặc hai chuyến bay. Khi đó, thuật toán có thể giảm chi phí thực tế bằng cách tính lại phần bị ảnh hưởng thay vì đánh giá lại toàn bộ nghiệm.
+
+Đối với thuật toán tìm kiếm giảm dần theo nhiều lân cận, chi phí phụ thuộc vào số lần quét qua các lân cận và số nghiệm ứng viên trong mỗi lân cận. Nếu ký hiệu $M_i$ là số ứng viên được xét trong lân cận $N_i$, chi phí một vòng quét có thể mô tả ở mức khái quát bởi:
+\begin{equation}
+    C_{\text{giam-dan}} = O\left(\sum_{i=1}^{h} M_i \cdot C_{\text{danh-gia}}\right),
+    \label{eq:chapter4-vnd-complexity}
+\end{equation}
+trong đó $C_{\text{danh-gia}}$ là chi phí đánh giá một nghiệm ứng viên.
+
+Đối với thuật toán tìm kiếm theo lân cận biến đổi, mỗi vòng lặp gồm một bước xáo trộn và một bước cải thiện cục bộ. Nếu số vòng lặp tối đa là $I$, chi phí có thể được ước lượng bởi:
+\begin{equation}
+    C_{\text{bien-doi}} = O\left(I \cdot (C_{\text{xao-tron}} + C_{\text{giam-dan}})\right).
+    \label{eq:chapter4-vns-complexity}
+\end{equation}
+
+Đối với thuật toán tìm kiếm lân cận lớn, bước sửa chữa thường là phần tốn thời gian nhất vì thuật toán phải thử nhiều vị trí chèn cho các đoạn tuyến bị loại bỏ. Nếu $r$ là số đoạn tuyến bị loại bỏ và mỗi đoạn tuyến có tối đa $P_r$ vị trí chèn hợp lệ, chi phí sửa chữa có thể được mô tả bởi:
+\begin{equation}
+    C_{\text{sua-chua}} = O\left(r \cdot P_r \cdot C_{\text{danh-gia}}\right).
+    \label{eq:chapter4-lns-repair-complexity}
+\end{equation}
+Do $r$ phụ thuộc vào tỷ lệ phá hủy $\alpha$, tham số này có ảnh hưởng trực tiếp đến thời gian chạy của thuật toán tìm kiếm lân cận lớn.
+
+Nhìn chung, độ phức tạp lý thuyết của các thuật toán chỉ phản ánh xu hướng tăng chi phí tính toán. Trong thực nghiệm, thời gian chạy còn phụ thuộc vào cách sắp xếp ứng viên, khả năng dừng sớm khi không còn cải thiện, số nghiệm được đưa vào pha tinh chỉnh và giới hạn thời gian được đặt cho từng lần chạy.
+
+\section{Nhận xét chung}
+
+Chương này đã phân tích các lựa chọn thiết kế chính của thuật toán trong đồ án. Các phân tích cho thấy bài toán có cấu trúc phân cấp, hàm mục tiêu dạng cực đại và ràng buộc giới hạn bay chặt chẽ. Vì vậy, thuật toán cần kết hợp giữa xây dựng nghiệm hợp lệ, cải thiện cục bộ, tái cấu trúc nghiệm và tinh chỉnh rời rạc.
+
+Ba thuật toán được sử dụng có vai trò bổ sung cho nhau. Thuật toán tìm kiếm giảm dần theo nhiều lân cận cung cấp cơ chế khai thác ổn định. Thuật toán tìm kiếm theo lân cận biến đổi tăng khả năng thoát khỏi tối ưu cục bộ thông qua xáo trộn và chấp nhận có kiểm soát. Thuật toán tìm kiếm lân cận lớn cho phép thay đổi một phần lớn của nghiệm thông qua phá hủy và sửa chữa. Những phân tích trong chương này là cơ sở để chương tiếp theo xây dựng kịch bản thực nghiệm và đánh giá kết quả của các thuật toán trên các bộ dữ liệu cụ thể.

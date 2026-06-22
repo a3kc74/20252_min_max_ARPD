@@ -490,3 +490,90 @@ Added an experiment runner for comparing `vns`, `lns`, and `vnd` over a fixed li
 
 - `UV_CACHE_DIR=/tmp/uv-cache uv run python -m unittest tests/test_multiseed_benchmark.py`
 - `UV_CACHE_DIR=/tmp/uv-cache uv run python -m compileall -q exp/multiseed_benchmark.py tests/test_multiseed_benchmark.py`
+
+## 2026-06-22 — Overleaf chapter 4 algorithm design analysis
+
+### Files changed
+
+- `Project_II__VNS__LNS_for_min_max_multi_trip_drone_location_arc_routing_problem/chapters/chapter4.tex`
+
+### Motivation
+
+The Overleaf report needed Chapter 4 to continue from Chapters 1--3 and present the algorithm design analysis in the same thesis-style structure as the reference document.
+
+### Implemented content
+
+Chapter 4 now analyzes:
+
+- problem characteristics and why exhaustive search is unsuitable;
+- the min-max objective and feasibility constraints;
+- hierarchical solution representation and evaluation flow;
+- initial solution construction;
+- neighborhood move design;
+- the design relationship among the three implemented improvement methods;
+- coarse-to-fine discretization refinement;
+- key algorithm parameters;
+- high-level computational complexity.
+
+The chapter includes LaTeX tables for constraints, neighborhoods, and parameters, plus TikZ diagrams for solution evaluation and algorithm relationships.
+
+### Notes
+
+No changes were needed in `main.tex`, `content.tex`, or `references.bib` because Chapter 4 was already included through `content.tex` and the new text only uses packages and bibliography entries already configured in the Overleaf project.
+
+## 2026-06-22 — Overleaf chapter 5 experiments and evaluation
+
+### Files changed
+
+- `Project_II__VNS__LNS_for_min_max_multi_trip_drone_location_arc_routing_problem/chapters/chapter5.tex`
+- `docs/implementation-notes.md`
+
+### Data sources
+
+Chapter 5 uses the experiment result files in `refs/`:
+
+- `gridsearch_MTLARP5_5_6_2_P5_L1168.csv`
+- `multiseed_vns_lns_vnd_summary44.csv`
+- `multiseed_vns_lns_vnd_summary55.csv`
+- `multiseed_vns_lns_vnd_summary56.csv`
+- `multiseed_vns_lns_vnd_summary58.csv`
+
+### Implemented content
+
+Chapter 5 now covers:
+
+- experiment goals and execution principles;
+- dataset groups and evaluation metrics;
+- parameter tuning on `MTLARP5_5_6_2.dat`;
+- multi-seed comparison over four dataset groups;
+- overall win/tie and average-gap summary;
+- runtime analysis and concluding observations.
+
+The chapter includes LaTeX tables for dataset groups, tuning results, family-level summaries, and overall summaries. It also includes TikZ bar charts for parameter-tuning objective values and average relative gap.
+
+### Notes
+
+No changes were needed in `main.tex`, `content.tex`, or `references.bib`: Chapter 5 was already included through `content.tex`, and the new tables/figures use existing packages already present in `main.tex`.
+
+## 2026-06-22 — Overleaf chapter 6 conclusion
+
+### Files changed
+
+- `Project_II__VNS__LNS_for_min_max_multi_trip_drone_location_arc_routing_problem/chapters/chapter6.tex`
+- `docs/implementation-notes.md`
+
+### Implemented content
+
+Chapter 6 now concludes the report with thesis-style sections:
+
+- achieved results;
+- meaning of the experiment results;
+- limitations;
+- future development directions;
+- overall conclusion.
+
+The chapter summarizes the modeled min-max multi-trip drone location arc routing problem, the three implemented local-search-based algorithms, the main experimental findings from Chapter 5, and future work directions for improving VNS, LNS, ablation experiments, and model extensions.
+
+### Notes
+
+No changes were needed in `main.tex`, `content.tex`, or `references.bib`: Chapter 6 was already included through `content.tex`, and the conclusion uses only packages already configured in the Overleaf project.
