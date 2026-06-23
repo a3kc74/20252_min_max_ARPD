@@ -1,0 +1,186 @@
+\documentclass[12pt]{article}
+
+% ================== Tiếng Việt và bố cục ==================
+\usepackage[utf8]{vietnam}
+\usepackage[a4paper, margin=1.6cm]{geometry}
+
+% ================== Toán học và hình vẽ ==================
+\usepackage{amsmath,amssymb}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta, positioning, calc}
+
+\pagestyle{empty}
+
+% ================== Kiểu flow-chart ==================
+\tikzset{
+    flowbox/.style={
+        rectangle,
+        rounded corners=6pt,
+        draw=black,
+        line width=0.8pt,
+        align=center,
+        text width=8.7cm,
+        minimum height=1.05cm,
+        inner xsep=6pt,
+        inner ysep=5pt,
+        font=\large
+    },
+    smallflowbox/.style={
+        rectangle,
+        rounded corners=6pt,
+        draw=black,
+        line width=0.8pt,
+        align=center,
+        text width=7.6cm,
+        minimum height=0.95cm,
+        inner xsep=6pt,
+        inner ysep=5pt,
+        font=\large
+    },
+    notebox/.style={
+        rectangle,
+        rounded corners=6pt,
+        draw=black,
+        line width=0.8pt,
+        align=left,
+        text width=5.2cm,
+        minimum height=1.15cm,
+        inner xsep=7pt,
+        inner ysep=7pt,
+        font=\normalsize
+    },
+    arrow/.style={-{Latex[length=3mm,width=2mm]}, line width=0.8pt},
+    dashedlink/.style={dashed, line width=0.8pt},
+    looparrow/.style={-{Latex[length=3mm,width=2mm]}, line width=0.8pt}
+}
+
+\newcommand{\flowtitle}[1]{%
+    \begin{center}
+        \Large\bfseries #1
+    \end{center}
+    \vspace{0.2cm}
+}
+
+\begin{document}
+
+% =========================================================
+% Flow-chart 1: Tìm kiếm giảm dần theo nhiều lân cận
+% =========================================================
+\flowtitle{Flow-chart thuật toán tìm kiếm giảm dần theo nhiều lân cận}
+
+\begin{center}
+\begin{tikzpicture}[node distance=0.95cm]
+    \node[flowbox] (start) {Tập nghiệm ban đầu hợp lệ\\chọn nghiệm tốt nhất ban đầu $S^*$};
+    \node[flowbox, below=of start] (choose) {Chọn một nghiệm $S$ trong tập nghiệm\\đặt chỉ số lân cận $i=1$};
+    \node[flowbox, below=of choose] (gen) {Sinh nghiệm ứng viên $S'$\\từ lân cận $N_i(S)$};
+    \node[flowbox, below=of gen] (eval) {Đánh giá nghiệm ứng viên\\kiểm tra tính khả thi và giá trị $Z(S')$};
+    \node[flowbox, below=of eval] (accept) {Áp dụng tiêu chí cải thiện\\$S'$ hợp lệ và $Z(S')<Z(S)$};
+    \node[flowbox, below=of accept] (update) {Nếu cải thiện: cập nhật $S\leftarrow S'$\\và quay lại $i=1$};
+    \node[flowbox, below=of update] (next) {Nếu không cải thiện: tăng $i\leftarrow i+1$\\tiếp tục khi $i\leq h$};
+    \node[flowbox, below=of next] (best) {So sánh nghiệm thu được với $S^*$\\cập nhật $S^*$ nếu có cải thiện};
+    \node[flowbox, below=of best] (split) {Tinh chỉnh điểm rời rạc trên các nghiệm tốt\\sau đó cải thiện lại bằng cùng cơ chế};
+    \node[flowbox, below=of split] (return) {Trả về nghiệm tốt nhất $S^*$};
+
+    \node[notebox, right=1.1cm of accept] (note) {Thuật toán chỉ chấp nhận nghiệm tốt hơn; vì vậy quá trình tìm kiếm ổn định nhưng có thể dừng tại tối ưu cục bộ.};
+
+    \draw[arrow] (start) -- (choose);
+    \draw[arrow] (choose) -- (gen);
+    \draw[arrow] (gen) -- (eval);
+    \draw[arrow] (eval) -- (accept);
+    \draw[arrow] (accept) -- (update);
+    \draw[arrow] (update) -- (next);
+    \draw[arrow] (next) -- (best);
+    \draw[arrow] (best) -- (split);
+    \draw[arrow] (split) -- (return);
+    \draw[dashedlink] (accept.east) -- (note.west);
+
+    \draw[looparrow]
+        ([xshift=-0.65cm]next.west) -- ++(-1.35cm,0) |- (gen.west);
+    \draw[looparrow]
+        ([xshift=-0.35cm]update.west) -- ++(-1.95cm,0) |- (gen.west);
+\end{tikzpicture}
+\end{center}
+
+\newpage
+
+% =========================================================
+% Flow-chart 2: Tìm kiếm theo lân cận biến đổi
+% =========================================================
+\flowtitle{Flow-chart thuật toán tìm kiếm theo lân cận biến đổi}
+
+\begin{center}
+\begin{tikzpicture}[node distance=0.95cm]
+    \node[flowbox] (start) {Khởi tạo nghiệm hiện tại $S$\\nghiệm tốt nhất $S^*$ và tập nghiệm tốt};
+    \node[flowbox, below=of start] (kinit) {Đặt mức xáo trộn ban đầu $k=1$};
+    \node[flowbox, below=of kinit] (shake) {Tạo nghiệm trung gian $\widetilde{S}$\\bằng xáo trộn theo mức $k$};
+    \node[flowbox, below=of shake] (vnd) {Cải thiện $\widetilde{S}$ bằng tìm kiếm giảm dần\\theo nhiều lân cận để thu được $S'$};
+    \node[flowbox, below=of vnd] (eval) {Đánh giá nghiệm $S'$\\so sánh với $S$ và $S^*$};
+    \node[flowbox, below=of eval] (best) {Nếu $Z(S')<Z(S^*)$:\\cập nhật $S^*\leftarrow S'$ và lưu nghiệm tốt};
+    \node[flowbox, below=of best] (accept) {Áp dụng tiêu chí chấp nhận\\$Z(S')\leq (1+\Delta)Z(S^*)$};
+    \node[flowbox, below=of accept] (current) {Nếu được chấp nhận:\\cập nhật nghiệm hiện tại $S\leftarrow S'$};
+    \node[flowbox, below=of current] (stagnation) {Nếu chưa cải thiện:\\tăng mức xáo trộn hoặc khởi động lại từ nghiệm tốt};
+    \node[flowbox, below=of stagnation] (final) {Cải thiện lại nghiệm tốt nhất\\và tinh chỉnh điểm rời rạc};
+    \node[flowbox, below=of final] (return) {Trả về nghiệm tốt nhất $S^*$};
+
+    \node[notebox, right=1.1cm of accept] (note) {Có thể chấp nhận một số nghiệm không tốt hơn nghiệm tốt nhất, miễn là nghiệm vẫn nằm trong mức sai lệch có kiểm soát.};
+
+    \draw[arrow] (start) -- (kinit);
+    \draw[arrow] (kinit) -- (shake);
+    \draw[arrow] (shake) -- (vnd);
+    \draw[arrow] (vnd) -- (eval);
+    \draw[arrow] (eval) -- (best);
+    \draw[arrow] (best) -- (accept);
+    \draw[arrow] (accept) -- (current);
+    \draw[arrow] (current) -- (stagnation);
+    \draw[arrow] (stagnation) -- (final);
+    \draw[arrow] (final) -- (return);
+    \draw[dashedlink] (accept.east) -- (note.west);
+
+    \draw[looparrow]
+        ([xshift=-0.65cm]stagnation.west) -- ++(-1.45cm,0) |- (shake.west);
+    \draw[looparrow]
+        ([xshift=-0.35cm]best.west) -- ++(-2.05cm,0) |- (shake.west);
+\end{tikzpicture}
+\end{center}
+
+\newpage
+
+% =========================================================
+% Flow-chart 3: Tìm kiếm lân cận lớn
+% =========================================================
+\flowtitle{Flow-chart thuật toán tìm kiếm lân cận lớn}
+
+\begin{center}
+\begin{tikzpicture}[node distance=0.95cm]
+    \node[flowbox] (start) {Tạo tập nghiệm ban đầu\\và cải thiện bằng tìm kiếm giảm dần};
+    \node[flowbox, below=of start] (select) {Chọn một số nghiệm tốt nhất\\làm các điểm xuất phát};
+    \node[flowbox, below=of select] (init) {Chọn nghiệm xuất phát $S$\\đặt nghiệm tốt nhất $S^*$};
+    \node[flowbox, below=of init] (size) {Xác định số đoạn tuyến cần loại bỏ\\$r=\max\{1,\lfloor\alpha n\rfloor\}$};
+    \node[flowbox, below=of size] (destroy) {Phá hủy nghiệm:\\loại bỏ tập đoạn tuyến $R^-$ khỏi $S$};
+    \node[flowbox, below=of destroy] (repair) {Sửa chữa nghiệm:\\chèn lại từng đoạn tuyến trong $R^-$};
+    \node[flowbox, below=of repair] (insert) {Chọn vị trí chèn hợp lệ\\có chi phí tăng thêm nhỏ nhất};
+    \node[flowbox, below=of insert] (vnd) {Cải thiện nghiệm sau sửa chữa\\bằng tìm kiếm giảm dần theo nhiều lân cận};
+    \node[flowbox, below=of vnd] (best) {Nếu nghiệm mới tốt hơn $S^*$:\\cập nhật nghiệm tốt nhất};
+    \node[flowbox, below=of best] (split) {Tinh chỉnh điểm rời rạc\\trên các nghiệm tốt nhất thu được};
+    \node[flowbox, below=of split] (return) {Trả về nghiệm tốt nhất $S^*$};
+
+    \node[notebox, right=1.1cm of repair] (note) {Tỷ lệ phá hủy $\alpha$ điều khiển mức tái cấu trúc nghiệm: nhỏ thì ổn định hơn, lớn thì khám phá mạnh hơn.};
+
+    \draw[arrow] (start) -- (select);
+    \draw[arrow] (select) -- (init);
+    \draw[arrow] (init) -- (size);
+    \draw[arrow] (size) -- (destroy);
+    \draw[arrow] (destroy) -- (repair);
+    \draw[arrow] (repair) -- (insert);
+    \draw[arrow] (insert) -- (vnd);
+    \draw[arrow] (vnd) -- (best);
+    \draw[arrow] (best) -- (split);
+    \draw[arrow] (split) -- (return);
+    \draw[dashedlink] (repair.east) -- (note.west);
+
+    \draw[looparrow]
+        ([xshift=-0.65cm]best.west) -- ++(-1.45cm,0) |- (size.west);
+\end{tikzpicture}
+\end{center}
+
+\end{document}

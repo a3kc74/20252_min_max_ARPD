@@ -237,14 +237,21 @@ class LNSSolver(MatheuristicBase):
         start_solution: Solution,
         started: float,
         candidate_idx: int,
+        global_best: Solution,
     ) -> Solution:
-        """Run the LNS main loop from one initial candidate."""
+        """Run the LNS main loop from one initial candidate.
+
+        Convergence entries are recorded only when this candidate improves the
+        global incumbent. The stored iteration is the local iteration inside the
+        current candidate, and the optional metadata identifies the candidate.
+        """
         iteration_searches = (
             "intraroute_move",
             # "zero_to_l_exchange",
         )
         current = start_solution
         best = current
+        incumbent = global_best
 
         for iteration in range(1, self.max_iter + 1):
             if self.time_limit_reached():
@@ -265,13 +272,20 @@ class LNSSolver(MatheuristicBase):
                 current = repaired
                 if current.objective + 1e-9 < best.objective:
                     best = current
-                    self.convergence_log.append(
-                        (
-                            candidate_idx * self.max_iter + iteration,
-                            time.time() - started,
-                            best.clone(),
+                    if best.objective + 1e-9 < incumbent.objective:
+                        incumbent = best
+                        self.convergence_log.append(
+                            (
+                                iteration,
+                                time.time() - started,
+                                best.clone(),
+                                {
+                                    "phase": "lns",
+                                    "candidate": candidate_idx + 1,
+                                    "local_iteration": iteration,
+                                },
+                            )
                         )
-                    )
 
         return best
 
@@ -298,7 +312,18 @@ class LNSSolver(MatheuristicBase):
         best_instance = self.instance
 
         elapsed_init = time.time() - started
-        self.convergence_log: list = [(0, elapsed_init, best.clone())]
+        self.convergence_log: list = [
+            (
+                0,
+                elapsed_init,
+                best.clone(),
+                {
+                    "phase": "initial_pool",
+                    "candidate": None,
+                    "local_iteration": 0,
+                },
+            )
+        ]
 
         self._log(f"solve | initial pool size={len(improved_pool)}")
         self._log(f"solve | running LNS from top {len(top)} initial candidates")
@@ -307,19 +332,25 @@ class LNSSolver(MatheuristicBase):
         for idx, sol in enumerate(top):
             if self.time_limit_reached():
                 break
-            candidate_best = self._run_lns_from(sol, started, idx)
+            candidate_best = self._run_lns_from(sol, started, idx, best)
             final = self.vnd_improvement(candidate_best)
             if final.objective + 1e-9 < candidate_best.objective:
                 candidate_best = final
-                self.convergence_log.append(
-                    ((idx + 1) * self.max_iter, time.time() - started, candidate_best.clone())
-                )
 
             lns_candidates.append(candidate_best)
             if candidate_best.objective + 1e-9 < best.objective:
                 best = candidate_best
                 self.convergence_log.append(
-                    ((idx + 1) * self.max_iter, time.time() - started, best.clone())
+                    (
+                        self.max_iter,
+                        time.time() - started,
+                        best.clone(),
+                        {
+                            "phase": "candidate_vnd",
+                            "candidate": idx + 1,
+                            "local_iteration": self.max_iter,
+                        },
+                    )
                 )
 
         split_candidates = sorted(lns_candidates or top, key=lambda s: s.objective)[
@@ -346,14 +377,20 @@ class LNSSolver(MatheuristicBase):
                 best = split_candidate
                 best_instance = split_instance
                 self.convergence_log.append(
-                    (self.max_iter * len(top) + idx + 1, time.time() - started, best.clone())
+                    (
+                        idx + 1,
+                        time.time() - started,
+                        best.clone(),
+                        {
+                            "phase": "splitting",
+                            "candidate": idx + 1,
+                            "local_iteration": idx + 1,
+                        },
+                    )
                 )
 
         self.instance = best_instance
         self._distance_cache.clear()
 
         final = self.evaluate(best)
-        elapsed = time.time() - started
-        if self.convergence_log[-1][0] != self.max_iter * max(1, len(top)):
-            self.convergence_log.append((self.max_iter * max(1, len(top)), elapsed, final.clone()))
         return final, best_instance

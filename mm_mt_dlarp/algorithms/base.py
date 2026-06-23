@@ -43,14 +43,8 @@ class SolverConfig:
     bc_tailoff_window: int = 5
     bc_tailoff_tol: float = 5e-7
     split_top_k: int = 10
-    objective_type: str = "minmax_ghg"
     time_limit_seconds: Optional[float] = None
     search_deadline: Optional[float] = None
-    # GHG emission factors (paper Section 3.1)
-    emission_truck: float = 1.0        # F_t  (g/km or any consistent unit)
-    emission_drone_cruise: float = 1.0  # F_d  (g/km)
-    emission_drone_vt: float = 0.0      # F_d^vt (g/flight, fixed per takeoff-landing cycle)
-    emission_epsilon: float = 1e-6      # ε for Eq. 4 (avoids division by zero at depot)
     verbose: bool = True
 
 
@@ -115,21 +109,6 @@ class MatheuristicBase:
     def truck_cost(self, launch: int) -> float:
         return 2.0 * self.distance(self.instance.base_vertex, launch)
 
-    def truck_emission(self, launch: int) -> float:
-        """GHG emission for round-trip truck travel to *launch* (Eq. 5)."""
-        return self.config.emission_truck * self.truck_cost(launch)
-
-    def flight_emission(self, flight: Flight) -> float:
-        """GHG emission for one drone flight (Eq. 7).
-
-        Includes fixed vertical takeoff+landing term (2·F_d^vt) and
-        cruise term (F_d · range_cost).  Returns 0 for empty flights.
-        """
-        if not flight.tasks:
-            return 0.0
-        return (2.0 * self.config.emission_drone_vt
-                + self.config.emission_drone_cruise * self.flight_cost(flight))
-
     def edge_distance_to_launch(self, edge: RequiredEdge, launch: int) -> float:
         return min(self.distance(launch, edge.start_vertex), self.distance(launch, edge.end_vertex))
 
@@ -163,42 +142,12 @@ class MatheuristicBase:
             return 0.0
         return self.truck_cost(launch) + sum(self.flight_cost(f) for f in flights if f.tasks)
 
-    def route_emission_for_launch(self, solution: Solution, launch: int) -> float:
-        """Total GHG emission for one launching point (truck + all drone flights)."""
-        flights = solution.flights_by_launch.get(launch, [])
-        if not any(f.tasks for f in flights):
-            return 0.0
-        return self.truck_emission(launch) + sum(self.flight_emission(f) for f in flights if f.tasks)
-
-    def _objective_from_metrics(
-        self,
-        paper_by_launch: Dict[int, float],
-        ghg_by_launch: Dict[int, float],
-        total_ghg: float,
-    ) -> float:
-        objective_type = self.config.objective_type.lower()
-        if objective_type == "paper_makespan":
-            return max(paper_by_launch.values()) if paper_by_launch else float("inf")
-        if objective_type == "minmax_ghg":
-            return max(ghg_by_launch.values()) if ghg_by_launch else float("inf")
-        if objective_type == "total_ghg":
-            return total_ghg if paper_by_launch else float("inf")
-        raise ValueError(f"Unknown objective_type: {self.config.objective_type}")
-
     def evaluate(self, solution: Solution) -> Solution:
-        """Evaluate solution and set the configured objective.
-
-        Supported objectives:
-        - minmax_ghg: max_d [F_t·2c_0d + sum_k (2F_d^vt + F_d·range_cost_dk)]
-        - paper_makespan: max_d [2c_0d + sum_k range_cost_dk], the original MM-MT-dLARP objective
-        - total_ghg: sum_d [F_t·2c_0d + sum_k (2F_d^vt + F_d·range_cost_dk)]
-        """
+        """Evaluate solution with the original paper makespan objective."""
         pruned: Dict[int, List[Flight]] = {}
         selected: List[int] = []
         paper_by_launch: Dict[int, float] = {}
-        ghg_by_launch: Dict[int, float] = {}
         flight_costs: Dict[Tuple[int, int], float] = {}
-        total_ghg = 0.0
         for launch in list(solution.flights_by_launch.keys()):
             nonempty_flights = [f for f in solution.flights_by_launch[launch] if f.tasks]
             if not nonempty_flights:
@@ -207,35 +156,29 @@ class MatheuristicBase:
             selected.append(launch)
 
             paper_total = self.truck_cost(launch)
-            ghg_total = self.truck_emission(launch)
             for idx, flight in enumerate(nonempty_flights):
                 c = self.flight_cost(flight)
                 flight_costs[(launch, idx)] = c
                 paper_total += c
-                ghg_total += self.flight_emission(flight)
 
             paper_by_launch[launch] = paper_total
-            ghg_by_launch[launch] = ghg_total
-            total_ghg += ghg_total
 
         solution.flights_by_launch = pruned
         solution.selected_launches = sorted(selected)
-        solution.makespan_by_launch = paper_by_launch if self.config.objective_type.lower() == "paper_makespan" else ghg_by_launch
+        solution.makespan_by_launch = paper_by_launch
         solution.flight_costs = flight_costs
         solution.paper_makespan = max(paper_by_launch.values()) if selected else float("inf")
-        solution.ghg_makespan = max(ghg_by_launch.values()) if selected else float("inf")
-        solution.total_ghg = total_ghg if selected else float("inf")
-        solution.objective = self._objective_from_metrics(paper_by_launch, ghg_by_launch, solution.total_ghg)
+        solution.objective = solution.paper_makespan
         return solution
 
     # ------------------------------------------------------------------
     # Feasibility
     # ------------------------------------------------------------------
     def is_feasible_flight(self, flight: Flight) -> bool:
-        """Range constraint (Eq. 8): 2·F_d^vt + range_cost <= L."""
+        """Range constraint: flight_cost(flight) <= L."""
         if not flight.tasks:
             return True
-        return 2.0 * self.config.emission_drone_vt + self.flight_cost(flight) <= self.L + 1e-9
+        return self.flight_cost(flight) <= self.L + 1e-9
 
     def is_feasible_solution(self, solution: Solution) -> bool:
         used_edges = set()
@@ -281,7 +224,7 @@ class MatheuristicBase:
     def _weighted_sample_without_replacement(
         self, population: List, weights: List[float], k: int
     ) -> List:
-        """Weighted sampling without replacement (used for emission-guided launch selection)."""
+        """Weighted sampling without replacement (used for cost-based launch selection)."""
         if k >= len(population):
             return list(population)
         remaining_pop = list(population)
@@ -308,14 +251,7 @@ class MatheuristicBase:
         all_launches = list(self.instance.launch_vertices)
         k = min(self.config.num_trucks, len(all_launches))
 
-        # Emission-guided launch selection: p_d ∝ 1 / (F_t · 2·c_{0d} + ε)  (Eq. 4)
-        weights = [
-            1.0 / max(
-                self.config.emission_truck * self.truck_cost(d) + self.config.emission_epsilon,
-                1e-12,
-            )
-            for d in all_launches
-        ]
+        weights = [1.0 / max(self.truck_cost(d), 1e-12) for d in all_launches]
         launches = self._weighted_sample_without_replacement(all_launches, weights, k)
         self._log(f"construction | selected launches={launches}")
 
@@ -798,7 +734,7 @@ class MatheuristicBase:
     # Island-specific operators (Sec. 3.2.3)
     # ------------------------------------------------------------------
     def ils_improvement(self, solution: Solution, n_iter: int = 20) -> Solution:
-        """Island I2: ILS with emission-guided ruin-and-recreate perturbation."""
+        """Island I2: ILS with cost-based ruin-and-recreate perturbation."""
         current = self.vnd_improvement(solution)
         best = current
         for _ in range(n_iter):
@@ -815,7 +751,7 @@ class MatheuristicBase:
         return best
 
     def dp_bottleneck_improvement(self, solution: Solution) -> Solution:
-        """Island I3: DP-based flight optimiser on the highest-emission launching point."""
+        """Island I3: DP-based flight optimiser on the highest-cost launching point."""
         current = solution.clone()
         improved_any = False
         while True:
@@ -839,8 +775,8 @@ class MatheuristicBase:
             return current
         return solution
 
-    def greedy_repair_emission_edge(self, solution: Solution) -> Solution:
-        """Island I4: greedy repair targeting the highest per-km emission required edge."""
+    def greedy_repair_cost_edge(self, solution: Solution) -> Solution:
+        """Island I4: greedy repair targeting the highest service-cost density edge."""
         current = solution.clone()
 
         # Find required edge with highest service_cost / edge_length ratio

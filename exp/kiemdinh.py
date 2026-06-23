@@ -2,10 +2,10 @@
 """
 kiemdinh.py — Statistical testing for LCB-IMMA vs VND vs VNS vs LNS.
 
-Runs the full analysis for two metrics (GHG objective and running time) and
+Runs the full analysis for two metrics (objective and running time) and
 generates six LaTeX tables:
 
-  GHG Objective
+  Objective
     tab:friedman          Friedman test
     tab:T10_wilcoxon      Pairwise Wilcoxon, raw p-values
     tab:exp2_wilcoxon     Pairwise Wilcoxon, Holm-corrected
@@ -356,7 +356,7 @@ RUNS_REF = int(df.groupby(["instance", "algorithm"])["run_num"].max().max()) if 
 
 METRICS = [
     # (column,      display_label,   unit,      label_suffix)
-    ("fitness",    "GHG Objective", "",         ""),
+    ("fitness",    "Objective", "",         ""),
     ("runtime_s",  "Running Time",  "seconds",  "_time"),
 ]
 

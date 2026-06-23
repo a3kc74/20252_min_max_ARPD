@@ -1,0 +1,119 @@
+\chapter{CƠ SỞ LÝ THUYẾT}
+\label{chap:co-so-ly-thuyet}
+
+Chương này trình bày các cơ sở lý thuyết làm nền tảng cho đồ án. Nội dung của chương được xây dựng theo hướng đi từ các khái niệm chung của bài toán định tuyến trên cung, đến bài toán định tuyến bằng máy bay không người lái nhiều chuyến có lựa chọn điểm triển khai, sau đó giới thiệu các phương pháp tìm kiếm lân cận được sử dụng trong đồ án. Cách trình bày tập trung vào ý nghĩa của bài toán, các thành phần của mô hình và vai trò của từng nhóm phương pháp, thay vì đi sâu vào chi tiết cài đặt chương trình.
+
+\section{Bài toán định tuyến trên cung}
+
+Bài toán định tuyến trên cung là một lớp bài toán tối ưu hóa tổ hợp trong đó đối tượng cần phục vụ là các cạnh hoặc các đoạn tuyến của một đồ thị. Khác với những bài toán định tuyến trên nút, nơi phương tiện cần ghé thăm một tập điểm rời rạc, bài toán định tuyến trên cung yêu cầu phương tiện phải đi qua hoặc phục vụ một tập đoạn đường, tuyến ống, đường dây, kênh mương hoặc các đối tượng có dạng tuyến.
+
+Một mô hình định tuyến trên cung thường được xây dựng trên một đồ thị gồm tập đỉnh và tập cạnh. Trong tập cạnh có một số cạnh bắt buộc phải được phục vụ, gọi là các cạnh yêu cầu. Mỗi cạnh có thể gắn với chi phí di chuyển, chi phí phục vụ hoặc cả hai. Mục tiêu của bài toán là xây dựng một hoặc nhiều hành trình sao cho tất cả các cạnh yêu cầu đều được phục vụ, đồng thời tổng chi phí hoặc một tiêu chí vận hành nào đó được tối ưu. Các bài toán như bài toán người đưa thư Trung Hoa, bài toán người đưa thư nông thôn và bài toán định tuyến cung có tải trọng đều là những ví dụ tiêu biểu của lớp bài toán này \cite{golden1981arp,campbell2018darp}.
+
+Trong các ứng dụng kiểm tra hạ tầng tuyến tính, mô hình định tuyến trên cung đặc biệt phù hợp. Lý do là nhiệm vụ không chỉ là đi đến một vị trí, mà là phục vụ toàn bộ một đoạn tuyến. Ví dụ, khi kiểm tra đường dây điện, đường ống hoặc tuyến giao thông, thiết bị bay cần di chuyển dọc theo đoạn tuyến để ghi nhận hình ảnh hoặc thu thập dữ liệu. Vì vậy, việc mô hình hóa các đoạn tuyến cần phục vụ dưới dạng cạnh yêu cầu phản ánh sát hơn bản chất của bài toán so với mô hình chỉ gồm các điểm rời rạc.
+
+\section{Định tuyến cung bằng máy bay không người lái}
+
+Máy bay không người lái có nhiều đặc điểm khác với phương tiện mặt đất. Trước hết, máy bay không người lái có thể di chuyển trực tiếp trong không gian, không nhất thiết phải đi theo mạng đường bộ. Do đó, chi phí di chuyển giữa hai vị trí thường được tính theo khoảng cách hình học. Bên cạnh đó, máy bay không người lái bị giới hạn bởi dung lượng pin hoặc thời lượng bay, nên mỗi chuyến bay chỉ có thể kéo dài trong một phạm vi nhất định. Ngoài ra, trong nhiều tình huống thực tế, máy bay không người lái cần được hỗ trợ bởi xe tải hoặc một phương tiện mặt đất để vận chuyển đến gần khu vực làm nhiệm vụ.
+
+Trong bài toán định tuyến cung bằng máy bay không người lái, thiết bị bay cần phục vụ các đoạn tuyến yêu cầu. Một điểm khác biệt quan trọng so với phương tiện mặt đất là máy bay không người lái có thể tiếp cận một đoạn tuyến tại một vị trí bất kỳ, phục vụ một phần hoặc toàn bộ đoạn tuyến đó, rồi rời khỏi đoạn tuyến tại một vị trí khác. Khả năng này giúp phương án bay linh hoạt hơn, nhưng cũng làm cho bài toán trở nên khó hơn vì số lượng vị trí có thể đi vào và đi ra trên một đoạn tuyến là rất lớn nếu xét trong không gian liên tục \cite{campbell2018darp}.
+
+Để giải quyết khó khăn này, các nghiên cứu thường chuyển bài toán liên tục thành một bài toán rời rạc. Mỗi đoạn tuyến được xấp xỉ bằng một chuỗi các điểm hữu hạn. Khi đó, máy bay không người lái chỉ được phép đi vào hoặc rời khỏi đoạn tuyến tại các điểm đã được chọn. Cách làm này giúp bài toán có thể được biểu diễn bằng đồ thị hữu hạn, từ đó có thể áp dụng các phương pháp tối ưu hóa tổ hợp và các thuật toán tìm kiếm lân cận.
+
+\section{Bài toán định tuyến cung bằng máy bay không người lái nhiều chuyến có lựa chọn điểm triển khai}
+
+Bài toán được nghiên cứu trong đồ án này là bài toán định tuyến cung bằng máy bay không người lái nhiều chuyến có lựa chọn điểm triển khai và hàm mục tiêu cực tiểu hóa thời gian hoàn thành lớn nhất. Bài toán này được giới thiệu bởi Corberán và cộng sự trong nghiên cứu về bài toán \textit{Min--Max Multi--Trip Drone Location Arc Routing Problem} \cite{corberan2025mmdlarp}.
+
+Trong bài toán, có một kho trung tâm, một tập các điểm có thể dùng làm điểm triển khai và một số lượng hữu hạn xe tải. Mỗi xe tải mang theo một máy bay không người lái. Xe tải xuất phát từ kho trung tâm, di chuyển đến một điểm triển khai được chọn, sau đó máy bay không người lái thực hiện một hoặc nhiều chuyến bay từ điểm này để phục vụ các đoạn tuyến yêu cầu. Sau khi hoàn thành nhiệm vụ, máy bay không người lái quay lại điểm triển khai, còn xe tải quay về kho trung tâm.
+
+Một nghiệm của bài toán cần xác định ba nhóm quyết định chính. Thứ nhất là lựa chọn các điểm triển khai được sử dụng. Thứ hai là phân công các đoạn tuyến yêu cầu cho từng điểm triển khai. Thứ ba là xây dựng các chuyến bay khả thi cho máy bay không người lái tại mỗi điểm triển khai. Mỗi chuyến bay phải bắt đầu và kết thúc tại cùng một điểm triển khai, đồng thời tổng chi phí của chuyến bay không được vượt quá giới hạn bay cho trước.
+
+Với mỗi điểm triển khai được sử dụng, chi phí hoàn thành được tính bằng chi phí xe tải đi từ kho trung tâm đến điểm triển khai và quay lại, cộng với tổng chi phí các chuyến bay của máy bay không người lái tại điểm đó. Nếu gọi $C(d)$ là chi phí hoàn thành tại điểm triển khai $d$, thì mục tiêu của bài toán là làm nhỏ giá trị lớn nhất trong các chi phí này:
+\begin{equation}
+    \min \max_{d} C(d).
+    \label{eq:minmax-natural}
+\end{equation}
+
+Hàm mục tiêu trong công thức \eqref{eq:minmax-natural} thể hiện tinh thần cân bằng tải giữa các cặp xe tải và máy bay không người lái. Nếu chỉ tối thiểu hóa tổng chi phí, một phương án có thể dồn quá nhiều nhiệm vụ vào một điểm triển khai, làm cho thời gian hoàn thành của toàn bộ kế hoạch bị kéo dài. Ngược lại, mục tiêu cực tiểu hóa chi phí lớn nhất hướng thuật toán đến các nghiệm có sự phân phối nhiệm vụ đều hơn giữa các phương tiện.
+
+\section{Rời rạc hóa bài toán}
+
+Trong bài toán gốc, các đoạn tuyến cần phục vụ có thể được mô tả bằng các đường cong hoặc các chuỗi điểm rất chi tiết. Nếu cho phép máy bay không người lái đi vào và rời khỏi tuyến tại mọi vị trí, số lượng khả năng cần xét sẽ rất lớn. Vì vậy, một bước quan trọng là rời rạc hóa bài toán.
+
+Ý tưởng của rời rạc hóa là chọn một số điểm đại diện trên mỗi đoạn tuyến. Các điểm đại diện này chia tuyến ban đầu thành các đoạn nhỏ hơn. Mỗi đoạn nhỏ trở thành một phần cần phục vụ trong bài toán rời rạc. Khi đó, thay vì xét vô hạn vị trí trên tuyến, thuật toán chỉ cần xét một tập hữu hạn các điểm và các đoạn nối giữa chúng.
+
+Cách rời rạc hóa tạo ra sự đánh đổi giữa chất lượng nghiệm và thời gian tính toán. Nếu sử dụng quá ít điểm đại diện, bài toán trở nên đơn giản hơn nhưng nghiệm có thể kém linh hoạt. Nếu sử dụng quá nhiều điểm đại diện, mô hình gần với bài toán gốc hơn nhưng kích thước bài toán tăng nhanh. Do đó, một chiến lược hợp lý là bắt đầu từ biểu diễn thô, sau đó bổ sung thêm các điểm trung gian khi cần cải thiện nghiệm. Đây cũng là tinh thần của phương pháp được trình bày trong nghiên cứu gốc \cite{corberan2025mmdlarp}.
+
+Trong đồ án này, chương trình cũng được xây dựng theo hướng đó. Ban đầu, mỗi tuyến được biểu diễn bằng các đoạn cơ bản. Sau khi tìm được nghiệm, thuật toán có thể tinh chỉnh biểu diễn bằng cách bổ sung các điểm trung gian phù hợp, từ đó tạo thêm lựa chọn cho các chuyến bay và có khả năng cải thiện hàm mục tiêu.
+
+\section{Tối ưu hóa một chuyến bay}
+
+Khi đã biết một nhóm đoạn tuyến được giao cho một chuyến bay, vẫn cần xác định thứ tự phục vụ và hướng đi qua các đoạn tuyến đó. Đây là một bài toán con quan trọng, vì cùng một tập đoạn tuyến nhưng thứ tự phục vụ khác nhau có thể tạo ra chi phí chuyến bay rất khác nhau.
+
+Bài toán con này có liên hệ với bài toán định tuyến tổng quát, trong đó cần tìm một hành trình chi phí nhỏ nhất để phục vụ một tập cạnh yêu cầu trên đồ thị. Trong nghiên cứu nền, Corberán và cộng sự sử dụng thuật toán nhánh-cắt để giải bài toán định tuyến tổng quát phát sinh trong quá trình tối ưu từng chuyến bay \cite{corberan2007wgrp,corberan2025mmdlarp}. Cách làm này giúp giảm chi phí của các chuyến bay tại điểm triển khai đang là nút thắt của nghiệm.
+
+Trong đồ án, tối ưu hóa một chuyến bay được xem là một thành phần hỗ trợ cho các thuật toán tìm kiếm lân cận. Sau khi một nghiệm được tạo ra hoặc được thay đổi bởi các bước tìm kiếm, các chuyến bay có thể được tối ưu lại để giảm chi phí. Tuy nhiên, vì việc tối ưu này có thể tốn thời gian, cần sử dụng nó một cách có kiểm soát trong các thuật toán thực nghiệm.
+
+\section{Tìm kiếm cục bộ}
+
+Tìm kiếm cục bộ là một phương pháp phổ biến trong tối ưu hóa tổ hợp. Phương pháp này bắt đầu từ một nghiệm khả thi, sau đó liên tục xét các nghiệm lân cận của nghiệm hiện tại. Nếu tìm được nghiệm lân cận tốt hơn, thuật toán chuyển sang nghiệm đó và tiếp tục quá trình tìm kiếm. Quá trình dừng lại khi không còn tìm thấy cải thiện trong các lân cận được xét.
+
+Trong bài toán của đồ án, một nghiệm lân cận có thể được tạo ra bằng nhiều cách. Ví dụ, thuật toán có thể thay đổi thứ tự phục vụ các đoạn tuyến trong một chuyến bay, chuyển một đoạn tuyến từ chuyến bay này sang chuyến bay khác, hoặc hoán đổi một nhóm đoạn tuyến giữa hai chuyến bay. Mỗi kiểu thay đổi tạo thành một cấu trúc lân cận khác nhau.
+
+Ưu điểm của tìm kiếm cục bộ là đơn giản, dễ cài đặt và thường cải thiện nghiệm nhanh. Tuy nhiên, nhược điểm chính là thuật toán dễ bị mắc kẹt tại nghiệm tối ưu cục bộ. Nghĩa là nghiệm hiện tại không thể được cải thiện bằng các thay đổi nhỏ, nhưng vẫn có thể còn kém xa nghiệm tốt hơn nếu xét các thay đổi lớn hơn.
+
+\section{Tìm kiếm giảm dần theo nhiều lân cận}
+
+Tìm kiếm giảm dần theo nhiều lân cận là một mở rộng của tìm kiếm cục bộ. Thay vì chỉ dùng một kiểu lân cận, thuật toán sử dụng nhiều kiểu lân cận khác nhau theo một thứ tự nhất định \cite{hansen2001vns}. Khi một kiểu lân cận tạo ra nghiệm tốt hơn, thuật toán quay lại xét từ lân cận đầu tiên. Nếu một kiểu lân cận không tạo ra cải thiện, thuật toán chuyển sang kiểu lân cận tiếp theo.
+
+Cách làm này phù hợp với bài toán định tuyến cung bằng máy bay không người lái vì nghiệm có nhiều thành phần khác nhau. Một số cải thiện có thể đến từ việc tối ưu bên trong một chuyến bay, trong khi một số cải thiện khác chỉ xuất hiện khi chuyển nhiệm vụ giữa các chuyến bay hoặc giữa các điểm triển khai. Việc kết hợp nhiều lân cận giúp thuật toán khai thác tốt hơn cấu trúc của nghiệm.
+
+Trong đồ án, phương pháp này đóng vai trò là thuật toán nền. Các thuật toán phức tạp hơn đều sử dụng nó như một bước cải thiện nghiệm sau khi tạo ra nghiệm ban đầu hoặc nghiệm ứng viên. Các kiểu thay đổi chính bao gồm cải thiện trong một chuyến bay, loại bỏ rồi chèn lại một số nhiệm vụ, chuyển nhiệm vụ từ route đang có chi phí lớn nhất sang vị trí khác, và hoán đổi các nhóm nhiệm vụ giữa các chuyến bay.
+
+\section{Tìm kiếm theo lân cận biến đổi}
+
+Tìm kiếm theo lân cận biến đổi là một phương pháp metaheuristic được đề xuất nhằm khắc phục hạn chế của tìm kiếm cục bộ \cite{mladenovic1997vns,hansen2010vns}. Ý tưởng chính của phương pháp là một nghiệm tối ưu cục bộ theo một kiểu lân cận chưa chắc đã là tối ưu cục bộ theo một kiểu lân cận khác. Vì vậy, thay vì chỉ khai thác nghiệm hiện tại bằng các bước cải thiện nhỏ, thuật toán chủ động tạo ra sự xáo trộn để đi sang vùng nghiệm khác.
+
+Một vòng lặp của phương pháp này thường gồm ba bước. Trước hết, thuật toán tạo một nghiệm mới bằng cách làm nhiễu nghiệm hiện tại. Tiếp theo, nghiệm mới được cải thiện bằng tìm kiếm cục bộ. Cuối cùng, thuật toán quyết định có chấp nhận nghiệm vừa tìm được hay không. Nếu nghiệm mới tốt hơn, thuật toán cập nhật nghiệm hiện tại; nếu không, thuật toán có thể tăng mức độ xáo trộn để thử thoát khỏi vùng nghiệm hiện tại.
+
+Trong đồ án, phương pháp này được sử dụng để tăng khả năng thoát khỏi tối ưu cục bộ. Các bước xáo trộn có thể di chuyển một số nhiệm vụ, ưu tiên tác động vào route đang có chi phí lớn nhất hoặc dùng cơ chế loại bỏ rồi chèn lại nhiệm vụ. Sau mỗi lần xáo trộn, nghiệm được cải thiện bằng phương pháp tìm kiếm giảm dần theo nhiều lân cận. Ngoài ra, thuật toán có thể khởi động lại từ các nghiệm tốt đã lưu nếu không cải thiện trong nhiều vòng lặp liên tiếp.
+
+\section{Tìm kiếm lân cận lớn}
+
+Tìm kiếm lân cận lớn là một phương pháp trong đó thuật toán thay đổi một phần đáng kể của nghiệm thay vì chỉ thực hiện các thay đổi nhỏ \cite{shaw1998lns}. Một vòng lặp thường gồm hai bước: phá hủy một phần nghiệm và sửa chữa nghiệm. Ở bước phá hủy, một số nhiệm vụ được loại bỏ khỏi nghiệm hiện tại. Ở bước sửa chữa, các nhiệm vụ này được chèn lại vào các vị trí khả thi theo một quy tắc nhất định.
+
+Phương pháp này phù hợp với các bài toán định tuyến vì chất lượng nghiệm phụ thuộc mạnh vào cách phân công nhiệm vụ. Nếu một số nhiệm vụ ban đầu được gán vào vị trí không phù hợp, các bước thay đổi nhỏ có thể không đủ để sửa sai. Việc loại bỏ nhiều nhiệm vụ rồi chèn lại cho phép thuật toán tái cấu trúc nghiệm ở mức lớn hơn.
+
+Trong đồ án, tìm kiếm lân cận lớn được dùng để so sánh với các phương pháp dựa trên lân cận biến đổi. Tỷ lệ nhiệm vụ bị loại bỏ và số vòng lặp tối đa là hai tham số quan trọng. Sau khi sửa chữa nghiệm, thuật toán tiếp tục dùng tìm kiếm cục bộ để tinh chỉnh nghiệm ứng viên. Các nghiên cứu về tìm kiếm lân cận lớn thích nghi cho thấy việc điều chỉnh toán tử theo hiệu quả lịch sử có thể cải thiện chất lượng nghiệm trong nhiều bài toán định tuyến \cite{ropke2006alns,pisinger2007vrp}. Tuy nhiên, trong phạm vi đồ án này, phần thực nghiệm tập trung vào các cấu hình cố định để so sánh công bằng giữa các thuật toán.
+
+\section{Các thành phần chính trong đồ án}
+
+Bảng \ref{tab:chapter2-components-natural} tóm tắt các khái niệm chính được sử dụng trong đồ án và vai trò của chúng.
+
+\begin{table}[H]
+\centering
+\caption{Các khái niệm chính và vai trò trong đồ án}
+\label{tab:chapter2-components-natural}
+\begin{tabular}{|p{4.0cm}|p{9.0cm}|}
+\hline
+\textbf{Khái niệm} & \textbf{Vai trò trong đồ án} \\
+\hline
+Bài toán gốc & Mô tả nhiệm vụ lựa chọn điểm triển khai, phân công đoạn tuyến và xây dựng nhiều chuyến bay cho các máy bay không người lái. \\
+\hline
+Phiên bản rời rạc & Chuyển các tuyến liên tục thành một tập hữu hạn các đoạn cần phục vụ để có thể áp dụng thuật toán tối ưu. \\
+\hline
+Hàm mục tiêu cực tiểu hóa giá trị lớn nhất & Đánh giá nghiệm theo chi phí route lớn nhất trong các điểm triển khai được chọn, nhằm cân bằng thời gian hoàn thành giữa các phương tiện. \\
+\hline
+Tìm kiếm giảm dần theo nhiều lân cận & Cải thiện nghiệm bằng nhiều kiểu thay đổi nhỏ và có hệ thống. \\
+\hline
+Tìm kiếm theo lân cận biến đổi & Kết hợp xáo trộn nghiệm và tìm kiếm cục bộ để thoát khỏi tối ưu cục bộ. \\
+\hline
+Tìm kiếm lân cận lớn & Phá hủy và sửa chữa một phần nghiệm để tạo ra các thay đổi lớn hơn trong cấu trúc phân công. \\
+\hline
+Pha tinh chỉnh điểm rời rạc & Bổ sung điểm trung gian trên các tuyến để tạo thêm lựa chọn cho đường bay và cải thiện nghiệm cuối. \\
+\hline
+\end{tabular}
+\end{table}
+
+\section{Tổng kết chương}
+
+Chương này đã trình bày các kiến thức nền tảng phục vụ cho các chương tiếp theo. Trước hết, chương giới thiệu bài toán định tuyến trên cung và lý do lớp bài toán này phù hợp với nhiệm vụ kiểm tra các hạ tầng dạng tuyến bằng máy bay không người lái. Tiếp theo, chương mô tả bài toán định tuyến cung bằng máy bay không người lái nhiều chuyến có lựa chọn điểm triển khai, trong đó mục tiêu là giảm thời gian hoàn thành lớn nhất giữa các phương tiện. Cuối cùng, chương trình bày các nhóm phương pháp tìm kiếm lân cận được sử dụng trong đồ án, bao gồm tìm kiếm cục bộ, tìm kiếm giảm dần theo nhiều lân cận, tìm kiếm theo lân cận biến đổi và tìm kiếm lân cận lớn.

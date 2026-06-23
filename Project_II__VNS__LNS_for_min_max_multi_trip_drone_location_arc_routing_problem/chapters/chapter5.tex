@@ -1,0 +1,259 @@
+\chapter{THỰC NGHIỆM VÀ ĐÁNH GIÁ}
+\label{chap:thuc-nghiem-va-danh-gia}
+
+\section{Mục tiêu thực nghiệm}
+
+Chương này trình bày các thực nghiệm được thực hiện để đánh giá ba thuật toán đã phân tích ở Chương 3 và Chương 4. Mục tiêu chính của thực nghiệm là so sánh chất lượng nghiệm và thời gian chạy của ba hướng tiếp cận: tìm kiếm giảm dần theo nhiều lân cận, tìm kiếm theo lân cận biến đổi và tìm kiếm lân cận lớn.
+
+Các thực nghiệm tập trung vào ba câu hỏi. Thứ nhất, với cùng một cách biểu diễn nghiệm và cùng hàm đánh giá, thuật toán nào cho giá trị mục tiêu tốt hơn trên các nhóm dữ liệu khác nhau. Thứ hai, thuật toán nào ổn định hơn khi thay đổi hạt giống ngẫu nhiên. Thứ ba, các tham số chính của từng thuật toán ảnh hưởng như thế nào đến chất lượng nghiệm và thời gian chạy.
+
+Trong toàn bộ chương, giá trị nghiệm được hiểu là giá trị hàm mục tiêu cực tiểu hóa chi phí lớn nhất tại các điểm triển khai. Giá trị càng nhỏ thì nghiệm càng tốt. Thời gian chạy được tính bằng giây. Mỗi cấu hình trong thực nghiệm so sánh chính được chạy trên ba hạt giống ngẫu nhiên, sau đó lấy giá trị trung bình và độ lệch chuẩn.
+
+\section{Môi trường và nguyên tắc chạy thực nghiệm}
+
+Các thực nghiệm được thực hiện bằng chương trình thực nghiệm của đồ án trên cùng một quy trình xử lý dữ liệu. Với mỗi bộ dữ liệu, chương trình đọc thông tin bài toán, rời rạc hóa các đoạn tuyến cần phục vụ, xây dựng nghiệm ban đầu, sau đó chạy từng thuật toán trên cùng số xe tải và cùng giới hạn bay. Ba thuật toán đều sử dụng cùng hàm đánh giá đã trình bày ở Chương 3, do đó kết quả có thể so sánh trực tiếp.
+
+Nguyên tắc chạy thực nghiệm gồm các điểm sau:
+\begin{enumerate}[leftmargin=1.2cm]
+    \item Mỗi cấu hình dữ liệu được chạy với cùng tập ba hạt giống ngẫu nhiên $\{0,1,2\}$.
+    \item Các thuật toán được so sánh trên cùng bộ dữ liệu, cùng số xe tải và cùng giới hạn bay.
+    \item Kết quả được tổng hợp bằng trung bình và độ lệch chuẩn của giá trị mục tiêu và thời gian chạy.
+    \item Khi nhiều thuật toán có giá trị trung bình bằng nhau trong sai số làm tròn, các thuật toán đó được xem là cùng đạt kết quả tốt nhất trên cấu hình tương ứng.
+\end{enumerate}
+
+Trong chương này, các bảng kết quả được tổng hợp từ năm tệp thực nghiệm trong thư mục \texttt{refs}: \texttt{gridsearch\_MTLARP5\_5\_6\_2\_P5\_L1168.csv}, \texttt{multiseed\_vns\_lns\_vnd\_summary44.csv}, \texttt{multiseed\_vns\_lns\_vnd\_summary55.csv}, \texttt{multiseed\_vns\_lns\_vnd\_summary56.csv} và \texttt{multiseed\_vns\_lns\_vnd\_summary58.csv}. Các tệp này lần lượt cung cấp kết quả hiệu chỉnh tham số và kết quả so sánh đa hạt giống trên các nhóm dữ liệu khác nhau.
+
+\section{Bộ dữ liệu thực nghiệm}
+
+Các bộ dữ liệu sử dụng trong thực nghiệm thuộc họ MTLARP. Tên bộ dữ liệu có dạng thể hiện quy mô của bài toán, số nhóm điểm hoặc số đoạn tuyến liên quan và mã thứ tự của bộ dữ liệu. Trong phạm vi đồ án, các thực nghiệm được chia thành bốn nhóm chính theo tiền tố dữ liệu: $4\_4$, $5\_5$, $5\_6$ và $5\_8$.
+
+Nhóm $4\_4$ gồm các bộ dữ liệu nhỏ hơn, thời gian chạy trung bình thấp hơn và phù hợp để quan sát sự khác biệt ban đầu giữa các thuật toán. Các nhóm $5\_5$, $5\_6$ và $5\_8$ có quy mô lớn hơn, làm tăng số lựa chọn phân công và số vị trí chèn có thể có. Vì vậy, các nhóm này phản ánh rõ hơn sự đánh đổi giữa chất lượng nghiệm và thời gian chạy.
+
+Bảng \ref{tab:chapter5-dataset-groups} tóm tắt các nhóm dữ liệu được dùng trong thực nghiệm so sánh chính.
+
+\begin{table}[H]
+\centering
+\caption{Các nhóm dữ liệu trong thực nghiệm so sánh chính}
+\label{tab:chapter5-dataset-groups}
+\begin{tabular}{|C{2.2cm}|C{2.2cm}|C{2.7cm}|p{6.0cm}|}
+\hline
+\textbf{Nhóm} & \textbf{Số cấu hình} & \textbf{Số lần chạy mỗi cấu hình} & \textbf{Vai trò trong đánh giá} \\
+\hline
+$4\_4$ & 20 & 3 & Nhóm dữ liệu nhỏ, dùng để kiểm tra chất lượng nghiệm và thời gian chạy ở quy mô ban đầu \\
+\hline
+$5\_5$ & 20 & 3 & Nhóm dữ liệu trung bình, dùng để đánh giá khả năng cải thiện nghiệm khi số lựa chọn tăng lên \\
+\hline
+$5\_6$ & 20 & 3 & Nhóm dữ liệu trung bình lớn, dùng để quan sát độ ổn định của thuật toán khi cấu trúc bài toán phức tạp hơn \\
+\hline
+$5\_8$ & 20 & 3 & Nhóm dữ liệu lớn hơn, dùng để đánh giá sự đánh đổi giữa chất lượng nghiệm và thời gian chạy \\
+\hline
+\end{tabular}
+\end{table}
+
+\section{Chỉ số đánh giá và cách tổng hợp}
+
+Chỉ số quan trọng nhất trong thực nghiệm là giá trị trung bình của hàm mục tiêu. Với một cấu hình dữ liệu và một thuật toán, giả sử ba lần chạy cho các giá trị nghiệm $Z_1,Z_2,Z_3$. Giá trị trung bình được tính bởi:
+\begin{equation}
+    \overline{Z} = \frac{1}{3}\sum_{i=1}^{3} Z_i.
+    \label{eq:chapter5-mean-objective}
+\end{equation}
+
+Độ lệch chuẩn của giá trị nghiệm được dùng để đánh giá mức ổn định giữa các hạt giống ngẫu nhiên:
+\begin{equation}
+    \sigma_Z = \sqrt{\frac{1}{3}\sum_{i=1}^{3}(Z_i-\overline{Z})^2}.
+    \label{eq:chapter5-std-objective}
+\end{equation}
+
+Ngoài giá trị mục tiêu, chương này còn sử dụng thời gian chạy trung bình $\overline{T}$ và độ lệch chuẩn thời gian chạy $\sigma_T$. Để so sánh chất lượng nghiệm giữa các thuật toán trên nhiều cấu hình khác nhau, độ lệch tương đối so với thuật toán tốt nhất trên cùng cấu hình được tính như sau:
+\begin{equation}
+    \mathrm{Gap}(A) = \frac{\overline{Z}_A - \overline{Z}_{\min}}{\overline{Z}_{\min}} \times 100\%,
+    \label{eq:chapter5-gap}
+\end{equation}
+trong đó $\overline{Z}_A$ là giá trị trung bình của thuật toán $A$ và $\overline{Z}_{\min}$ là giá trị tốt nhất trong ba thuật toán trên cùng cấu hình dữ liệu.
+
+Một thuật toán được tính là thắng trên một cấu hình nếu nó có giá trị trung bình nhỏ nhất. Khi nhiều thuật toán có cùng giá trị trung bình nhỏ nhất, kết quả được ghi nhận là đồng hạng. Cách tổng hợp này phù hợp với mục tiêu của đồ án vì ưu tiên chất lượng nghiệm, sau đó mới xem xét thời gian chạy.
+
+\section{Thực nghiệm 1: Hiệu chỉnh tham số}
+
+Thực nghiệm hiệu chỉnh tham số được thực hiện trên bộ dữ liệu \texttt{MTLARP5\_5\_6\_2.dat} với $5$ xe tải và giới hạn bay $1168$. Mục tiêu của thực nghiệm là quan sát ảnh hưởng của một số tham số chính trước khi chạy so sánh đa hạt giống trên nhiều bộ dữ liệu.
+
+Với thuật toán tìm kiếm theo lân cận biến đổi, tham số được thay đổi là mức xáo trộn lớn nhất $k_{\max}$ trong khi số vòng lặp tối đa được giữ ở mức $50$. Với thuật toán tìm kiếm lân cận lớn, hai tham số được xét là tỷ lệ phá hủy $\alpha$ và số vòng lặp tối đa. Với thuật toán tìm kiếm giảm dần theo nhiều lân cận, tham số được xét là số nghiệm tốt được đưa vào pha tinh chỉnh điểm rời rạc.
+
+Bảng \ref{tab:chapter5-gridsearch} trình bày các cấu hình tốt nhất đại diện cho từng thuật toán trong thực nghiệm hiệu chỉnh tham số. Kết quả cho thấy thuật toán tìm kiếm lân cận lớn đạt giá trị mục tiêu tốt nhất trên bộ dữ liệu này khi dùng tỷ lệ phá hủy $0.4$ và $200$ vòng lặp. Thuật toán tìm kiếm giảm dần theo nhiều lân cận có thời gian chạy thấp hơn nhưng giá trị mục tiêu cao hơn. Thuật toán tìm kiếm theo lân cận biến đổi trong thiết lập này không tạo được cải thiện rõ rệt so với nghiệm ban đầu.
+
+\begin{table}[H]
+\centering
+\caption{Kết quả hiệu chỉnh tham số trên bộ dữ liệu MTLARP5\_5\_6\_2}
+\label{tab:chapter5-gridsearch}
+\begin{tabular}{|p{3.2cm}|p{5.3cm}|C{2.3cm}|C{2.1cm}|C{2.0cm}|}
+\hline
+\textbf{Thuật toán} & \textbf{Cấu hình tham số} & \textbf{Giá trị mục tiêu} & \textbf{Thời gian} & \textbf{Cải thiện} \\
+\hline
+Tìm kiếm giảm dần theo nhiều lân cận & Số nghiệm tinh chỉnh $=5$ & 1560.607 & 113.037 & 3.154\% \\
+\hline
+Tìm kiếm theo lân cận biến đổi & $k_{\max}=2$, số vòng lặp $=50$ & 1611.435 & 104.593 & 0.000\% \\
+\hline
+Tìm kiếm lân cận lớn & $\alpha=0.4$, số vòng lặp $=200$ & 1515.347 & 175.499 & 5.963\% \\
+\hline
+\end{tabular}
+\end{table}
+
+Hình \ref{fig:chapter5-gridsearch-bars} minh họa giá trị mục tiêu của ba cấu hình đại diện trong Bảng \ref{tab:chapter5-gridsearch}. Cột thấp hơn thể hiện nghiệm tốt hơn. Trên bộ dữ liệu hiệu chỉnh, tìm kiếm lân cận lớn cho kết quả tốt nhất nhưng cũng cần thời gian chạy lớn hơn.
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+    every node/.style={font=\small},
+    bar/.style={draw, fill=blue!20, minimum width=1.2cm},
+    axis/.style={->, thick}
+]
+\draw[axis] (0,0) -- (7.0,0);
+\draw[axis] (0,0) -- (0,4.4);
+\node[anchor=east] at (0,0) {1500};
+\node[anchor=east] at (0,1) {1530};
+\node[anchor=east] at (0,2) {1560};
+\node[anchor=east] at (0,3) {1590};
+\node[anchor=east] at (0,4) {1620};
+\draw (0,1) -- (-0.06,1);
+\draw (0,2) -- (-0.06,2);
+\draw (0,3) -- (-0.06,3);
+\draw (0,4) -- (-0.06,4);
+\draw[bar, fill=green!25] (1.0,0) rectangle (2.2,2.02);
+\draw[bar, fill=orange!25] (3.0,0) rectangle (4.2,3.71);
+\draw[bar, fill=blue!25] (5.0,0) rectangle (6.2,0.51);
+\node at (1.6,-0.35) {Giảm dần};
+\node at (3.6,-0.35) {Biến đổi};
+\node at (5.6,-0.35) {Lớn};
+\node[above] at (1.6,2.02) {1560.607};
+\node[above] at (3.6,3.71) {1611.435};
+\node[above] at (5.6,0.51) {1515.347};
+\node[rotate=90] at (-1.05,2.2) {Giá trị mục tiêu};
+\end{tikzpicture}
+\caption{So sánh giá trị mục tiêu trong thực nghiệm hiệu chỉnh tham số}
+\label{fig:chapter5-gridsearch-bars}
+\end{figure}
+
+\section{Thực nghiệm 2: So sánh ba thuật toán trên nhiều hạt giống}
+
+\subsection{Thiết lập chính}
+
+Thực nghiệm so sánh chính sử dụng bốn nhóm dữ liệu $4\_4$, $5\_5$, $5\_6$ và $5\_8$. Mỗi cấu hình dữ liệu được chạy với ba hạt giống ngẫu nhiên. Với thuật toán tìm kiếm lân cận lớn, tỷ lệ phá hủy được đặt là $0.4$ và số vòng lặp tối đa là $200$. Với thuật toán tìm kiếm theo lân cận biến đổi, mức xáo trộn lớn nhất được đặt là $2$ và số vòng lặp tối đa là $100$. Các thiết lập này phản ánh cấu hình được lựa chọn sau giai đoạn hiệu chỉnh và quá trình chạy thử nghiệm trong đồ án.
+
+\subsection{Kết quả tổng hợp theo nhóm dữ liệu}
+
+Bảng \ref{tab:chapter5-family-summary} trình bày kết quả trung bình theo từng nhóm dữ liệu. Với mỗi nhóm và mỗi thuật toán, bảng ghi giá trị mục tiêu trung bình, độ lệch chuẩn trung bình của giá trị mục tiêu, thời gian chạy trung bình, số lần thắng riêng và số lần đồng hạng tốt nhất.
+
+\begin{longtable}{|C{1.25cm}|p{3.2cm}|C{2.1cm}|C{2.0cm}|C{2.0cm}|C{1.5cm}|C{1.6cm}|}
+\caption{Kết quả so sánh tổng hợp theo nhóm dữ liệu}\label{tab:chapter5-family-summary}\\
+\hline
+\textbf{Nhóm} & \textbf{Thuật toán} & \textbf{Mục tiêu TB} & \textbf{Độ lệch TB} & \textbf{Thời gian TB} & \textbf{Thắng} & \textbf{Đồng hạng} \\
+\hline
+\endfirsthead
+\hline
+\textbf{Nhóm} & \textbf{Thuật toán} & \textbf{Mục tiêu TB} & \textbf{Độ lệch TB} & \textbf{Thời gian TB} & \textbf{Thắng} & \textbf{Đồng hạng} \\
+\hline
+\endhead
+$4\_4$ & Tìm kiếm giảm dần & 1435.066 & 25.627 & 8.570 & 2 & 6 \\
+\hline
+$4\_4$ & Tìm kiếm biến đổi & 1432.217 & 20.515 & 12.770 & 5 & 5 \\
+\hline
+$4\_4$ & Tìm kiếm lân cận lớn & 1416.798 & 10.716 & 12.968 & 6 & 7 \\
+\hline
+$5\_5$ & Tìm kiếm giảm dần & 2471.081 & 41.603 & 83.526 & 4 & 0 \\
+\hline
+$5\_5$ & Tìm kiếm biến đổi & 2488.341 & 32.252 & 110.068 & 2 & 1 \\
+\hline
+$5\_5$ & Tìm kiếm lân cận lớn & 2444.569 & 28.804 & 104.164 & 13 & 1 \\
+\hline
+$5\_6$ & Tìm kiếm giảm dần & 2676.155 & 46.952 & 57.066 & 6 & 1 \\
+\hline
+$5\_6$ & Tìm kiếm biến đổi & 2692.892 & 28.893 & 77.794 & 0 & 1 \\
+\hline
+$5\_6$ & Tìm kiếm lân cận lớn & 2660.002 & 30.687 & 73.216 & 12 & 2 \\
+\hline
+$5\_8$ & Tìm kiếm giảm dần & 3810.890 & 50.655 & 202.683 & 3 & 0 \\
+\hline
+$5\_8$ & Tìm kiếm biến đổi & 3820.611 & 58.484 & 255.143 & 1 & 0 \\
+\hline
+$5\_8$ & Tìm kiếm lân cận lớn & 3765.090 & 38.330 & 254.556 & 16 & 0 \\
+\hline
+\end{longtable}
+
+Kết quả cho thấy tìm kiếm lân cận lớn có ưu thế rõ rệt về chất lượng nghiệm trên cả bốn nhóm dữ liệu. Ở nhóm $4\_4$, thuật toán này đạt giá trị mục tiêu trung bình $1416.798$, thấp hơn hai thuật toán còn lại. Khi quy mô tăng lên ở các nhóm $5\_5$, $5\_6$ và $5\_8$, khoảng cách chất lượng nghiệm của tìm kiếm lân cận lớn tiếp tục được duy trì. Điều này phù hợp với phân tích ở Chương 4: cơ chế phá hủy và sửa chữa giúp thuật toán tái cấu trúc nghiệm tốt hơn khi không gian nghiệm lớn.
+
+Tìm kiếm giảm dần theo nhiều lân cận có ưu điểm về thời gian chạy. Trên cả bốn nhóm dữ liệu, thuật toán này thường có thời gian trung bình thấp nhất. Tuy nhiên, do chỉ chấp nhận nghiệm cải thiện trực tiếp, thuật toán dễ bị giới hạn bởi cấu trúc nghiệm cục bộ. Tìm kiếm theo lân cận biến đổi có thêm bước xáo trộn, nhưng trong các thực nghiệm này chưa tạo ra ưu thế ổn định so với hai thuật toán còn lại.
+
+\subsection{Kết quả tổng hợp toàn bộ dữ liệu}
+
+Bảng \ref{tab:chapter5-overall-summary} tổng hợp kết quả trên toàn bộ $80$ cấu hình dữ liệu. Cột độ lệch tương đối trung bình được tính theo Công thức \eqref{eq:chapter5-gap}. Kết quả cho thấy tìm kiếm lân cận lớn có độ lệch trung bình thấp nhất, đồng thời thắng riêng trên $47$ cấu hình và đồng hạng tốt nhất trên $10$ cấu hình.
+
+\begin{table}[H]
+\centering
+\caption{Kết quả tổng hợp trên toàn bộ cấu hình dữ liệu}
+\label{tab:chapter5-overall-summary}
+\begin{tabular}{|p{3.6cm}|C{2.3cm}|C{2.1cm}|C{2.0cm}|C{1.6cm}|C{1.8cm}|}
+\hline
+\textbf{Thuật toán} & \textbf{Mục tiêu TB} & \textbf{Thời gian TB} & \textbf{Độ lệch TB} & \textbf{Thắng} & \textbf{Đồng hạng} \\
+\hline
+Tìm kiếm giảm dần theo nhiều lân cận & 2598.298 & 87.961 & 1.458\% & 15 & 7 \\
+\hline
+Tìm kiếm theo lân cận biến đổi & 2608.515 & 113.944 & 1.717\% & 8 & 7 \\
+\hline
+Tìm kiếm lân cận lớn & 2571.615 & 111.226 & 0.251\% & 47 & 10 \\
+\hline
+\end{tabular}
+\end{table}
+
+Hình \ref{fig:chapter5-overall-gap} minh họa độ lệch tương đối trung bình của ba thuật toán. Kết quả này củng cố nhận xét rằng tìm kiếm lân cận lớn là thuật toán có chất lượng nghiệm tốt nhất trong tập thực nghiệm hiện tại, trong khi tìm kiếm giảm dần theo nhiều lân cận là lựa chọn phù hợp hơn khi ưu tiên thời gian chạy.
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+    every node/.style={font=\small},
+    bar/.style={draw, fill=orange!25, minimum height=0.7cm},
+    axis/.style={->, thick}
+]
+\draw[axis] (0,0) -- (7.2,0);
+\draw[axis] (0,0) -- (0,3.4);
+\foreach \x/\lab in {0/0,1/0.5,2/1.0,3/1.5,4/2.0} {
+    \draw (\x*1.5,0) -- (\x*1.5,-0.06);
+    \node[below] at (\x*1.5,-0.06) {\lab\%};
+}
+\draw[bar, fill=green!25] (0,2.55) rectangle (4.37,3.15);
+\draw[bar, fill=orange!25] (0,1.45) rectangle (5.15,2.05);
+\draw[bar, fill=blue!25] (0,0.35) rectangle (0.75,0.95);
+\node[anchor=east] at (-0.1,2.85) {Giảm dần};
+\node[anchor=east] at (-0.1,1.75) {Biến đổi};
+\node[anchor=east] at (-0.1,0.65) {Lớn};
+\node[anchor=west] at (4.45,2.85) {1.458\%};
+\node[anchor=west] at (5.23,1.75) {1.717\%};
+\node[anchor=west] at (0.83,0.65) {0.251\%};
+\node at (3.5,-0.75) {Độ lệch tương đối trung bình so với thuật toán tốt nhất};
+\end{tikzpicture}
+\caption{Độ lệch tương đối trung bình trên toàn bộ dữ liệu}
+\label{fig:chapter5-overall-gap}
+\end{figure}
+
+\section{Phân tích theo từng nhóm dữ liệu}
+
+Trên nhóm $4\_4$, cả ba thuật toán cho kết quả tương đối gần nhau. Tìm kiếm lân cận lớn vẫn đạt giá trị trung bình tốt nhất, nhưng thời gian chạy của tìm kiếm giảm dần theo nhiều lân cận thấp hơn đáng kể. Điều này cho thấy ở quy mô nhỏ, các phép cải thiện cục bộ đã đủ để tạo nghiệm có chất lượng tương đối tốt, trong khi các cơ chế tái cấu trúc mạnh chỉ đem lại mức cải thiện vừa phải.
+
+Trên nhóm $5\_5$, tìm kiếm lân cận lớn bắt đầu thể hiện ưu thế rõ hơn. Thuật toán này thắng riêng trên $13$ trong $20$ cấu hình và có giá trị mục tiêu trung bình thấp hơn hai thuật toán còn lại. Sự khác biệt này cho thấy khi số lựa chọn tăng lên, việc loại bỏ và chèn lại một phần nghiệm giúp thuật toán điều chỉnh các quyết định phân công hiệu quả hơn.
+
+Trên nhóm $5\_6$, tìm kiếm lân cận lớn tiếp tục có kết quả tốt nhất về giá trị trung bình và số lần thắng. Tuy nhiên, tìm kiếm giảm dần theo nhiều lân cận vẫn có thời gian chạy thấp hơn. Điều này phản ánh sự đánh đổi quen thuộc giữa chất lượng nghiệm và chi phí tính toán: các phép tái cấu trúc mạnh giúp cải thiện nghiệm nhưng đòi hỏi nhiều lần đánh giá vị trí chèn hơn.
+
+Trên nhóm $5\_8$, khoảng cách giữa tìm kiếm lân cận lớn và hai thuật toán còn lại rõ rệt nhất. Thuật toán này thắng riêng trên $16$ trong $20$ cấu hình. Đây là dấu hiệu cho thấy khi không gian nghiệm lớn hơn, các thay đổi nhỏ của tìm kiếm cục bộ khó sửa được những quyết định phân công chưa tốt ở mức toàn cục, trong khi cơ chế phá hủy -- sửa chữa có khả năng tái tổ chức nghiệm hiệu quả hơn.
+
+\section{Phân tích thời gian chạy}
+
+Thời gian chạy trung bình cho thấy tìm kiếm giảm dần theo nhiều lân cận là thuật toán nhanh nhất trong phần lớn trường hợp. Nguyên nhân là thuật toán này chỉ áp dụng các phép cải thiện theo thứ tự lân cận và dừng khi không còn cải thiện. Nó không cần thực hiện các bước xáo trộn mạnh hoặc sửa chữa nhiều đoạn tuyến sau phá hủy.
+
+Tìm kiếm theo lân cận biến đổi có thời gian chạy cao hơn do mỗi vòng lặp gồm hai phần: xáo trộn nghiệm và cải thiện lại bằng tìm kiếm cục bộ. Nếu bước xáo trộn không tạo ra vùng nghiệm tốt hơn, phần thời gian dành cho cải thiện sau xáo trộn có thể không đem lại cải thiện tương ứng về giá trị mục tiêu.
+
+Tìm kiếm lân cận lớn có thời gian chạy cao do bước sửa chữa phải xét nhiều vị trí chèn hợp lệ cho các đoạn tuyến bị loại bỏ. Tuy nhiên, thời gian tăng thêm đi kèm với chất lượng nghiệm tốt hơn trong hầu hết nhóm dữ liệu. Vì vậy, thuật toán này phù hợp với kịch bản ưu tiên chất lượng nghiệm, trong khi tìm kiếm giảm dần theo nhiều lân cận phù hợp với kịch bản cần nghiệm nhanh.
+
+\section{Nhận xét chung}
+
+Các kết quả thực nghiệm cho thấy ba thuật toán có vai trò khác nhau. Tìm kiếm giảm dần theo nhiều lân cận là phương pháp nền tảng, ổn định và có thời gian chạy thấp. Tìm kiếm theo lân cận biến đổi bổ sung khả năng khám phá thông qua xáo trộn nghiệm, nhưng trong tập thực nghiệm hiện tại chưa vượt trội về chất lượng nghiệm. Tìm kiếm lân cận lớn cho kết quả tốt nhất về giá trị mục tiêu, đặc biệt trên các nhóm dữ liệu lớn hơn, nhờ khả năng tái cấu trúc nghiệm bằng cơ chế phá hủy và sửa chữa.
+
+Từ góc độ lựa chọn thuật toán, nếu mục tiêu là có nghiệm khả thi trong thời gian ngắn, tìm kiếm giảm dần theo nhiều lân cận là lựa chọn hợp lý. Nếu mục tiêu là giảm sâu giá trị hàm mục tiêu và có thể chấp nhận thời gian chạy lớn hơn, tìm kiếm lân cận lớn là lựa chọn phù hợp hơn. Các kết quả này cũng gợi ý rằng hướng phát triển tiếp theo có thể tập trung vào cải thiện cơ chế xáo trộn của tìm kiếm theo lân cận biến đổi và tối ưu hóa bước sửa chữa của tìm kiếm lân cận lớn để giảm thời gian chạy.

@@ -124,8 +124,6 @@ class Solution:
     makespan_by_launch: Dict[int, float] = field(default_factory=dict)
     flight_costs: Dict[Tuple[int, int], float] = field(default_factory=dict)
     paper_makespan: float = float("inf")
-    ghg_makespan: float = float("inf")
-    total_ghg: float = float("inf")
 
     def clone(self) -> "Solution":
         copied = {
@@ -139,8 +137,6 @@ class Solution:
             makespan_by_launch=dict(self.makespan_by_launch),
             flight_costs=dict(self.flight_costs),
             paper_makespan=self.paper_makespan,
-            ghg_makespan=self.ghg_makespan,
-            total_ghg=self.total_ghg,
         )
 
     def normalized_signature(self) -> Tuple:

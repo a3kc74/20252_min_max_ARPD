@@ -34,7 +34,7 @@ Output:
   exp/results/exp3/summary.csv
     — one row per (instance, algorithm, run)
   exp/results/exp3/{instance_name}/{algo}_run{r:02d}.csv
-    — convergence log: generation, time, best_solution, GHG, fitness
+    — convergence log: generation, time, best_solution, objective, fitness
 """
 
 from __future__ import annotations
@@ -112,7 +112,7 @@ SUMMARY_FIELDS = [
     "instance", "scale", "algorithm", "run_num",
     "fitness", "is_feasible", "final_generation", "runtime_s",
 ]
-CONV_FIELDS = ["generation", "time", "best_solution", "GHG", "fitness"]
+CONV_FIELDS = ["generation", "time", "best_solution", "objective", "fitness"]
 
 
 def _solution_repr(sol) -> str:
@@ -145,7 +145,7 @@ def _write_conv_log(writer, conv_log, fallback_sol, fallback_runtime) -> None:
                 "generation":    gen,
                 "time":          f"{t:.4f}",
                 "best_solution": _solution_repr(sol),
-                "GHG":           f"{ghg:.6f}",
+                "objective":           f"{ghg:.6f}",
                 "fitness":       f"{sol.objective:.6f}",
             })
     else:
@@ -154,7 +154,7 @@ def _write_conv_log(writer, conv_log, fallback_sol, fallback_runtime) -> None:
             "generation":    0,
             "time":          f"{fallback_runtime:.4f}",
             "best_solution": _solution_repr(fallback_sol),
-            "GHG":           f"{ghg:.6f}",
+            "objective":           f"{ghg:.6f}",
             "fitness":       f"{fallback_sol.objective:.6f}",
         })
 

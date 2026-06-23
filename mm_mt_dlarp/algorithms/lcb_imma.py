@@ -9,9 +9,9 @@ Implements the four-stage LCB-IMMA pipeline (paper Section 3):
 
 Four islands, each with a distinct local-search operator:
   I0 (I1 in paper) – VND with four nested neighbourhoods.
-  I1 (I2 in paper) – ILS with emission-guided ruin-and-recreate.
-  I2 (I3 in paper) – DP-based flight optimiser on the highest-emission launch.
-  I3 (I4 in paper) – Greedy repair targeting the highest per-km emission edge.
+  I1 (I2 in paper) – ILS with cost-based ruin-and-recreate.
+  I2 (I3 in paper) – DP-based flight optimiser on the highest-cost launch.
+  I3 (I4 in paper) – Greedy repair targeting the highest service-cost density edge.
 
 The two-stage LinUCB bandit (alpha-coefficient ridge regression) adaptively
 selects (source island, destination island, migration granularity) at every
@@ -235,12 +235,12 @@ class LCBIMMASolver(MatheuristicBase):
             return self.ils_improvement(sol, n_iter=self.ils_iter)
         if island_idx == 2:
             return self.dp_bottleneck_improvement(sol)
-        return self.greedy_repair_emission_edge(sol)
+        return self.greedy_repair_cost_edge(sol)
 
     # --- crossover & mutation ------------------------------------------------
 
     def _crossover(self, pop: List[Solution]) -> List[Solution]:
-        """Donate a random flight from one parent into another (emission crossover)."""
+        """Donate a random flight from one parent into another."""
         if len(pop) < 2:
             return list(pop)
         new_pop = list(pop)

@@ -2,11 +2,11 @@
 Build summary_final.csv from convergence CSVs in exp/results/exp3/.
 
 For each file {instance}/{algo}_run{r:02d}.csv:
-  - Find the row with the smallest fitness (best GHG emission)
+  - Find the row with the smallest fitness (best objective)
   - Tie-break: smallest time
   - Write one output row to summary_final.csv
 
-Convergence CSVs have columns: generation, time, best_solution, GHG, fitness.
+Convergence CSVs have columns: generation, time, best_solution, objective, fitness.
 
 Output: exp/summary_final.csv  (same directory as this script)
 """
