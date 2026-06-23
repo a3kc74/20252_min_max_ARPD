@@ -577,3 +577,22 @@ The chapter summarizes the modeled min-max multi-trip drone location arc routing
 ### Notes
 
 No changes were needed in `main.tex`, `content.tex`, or `references.bib`: Chapter 6 was already included through `content.tex`, and the conclusion uses only packages already configured in the Overleaf project.
+## 2026-06-23 — Overleaf flow-chart drawings for three proposed algorithms
+
+### Files changed
+
+- `Project_II__VNS__LNS_for_min_max_multi_trip_drone_location_arc_routing_problem/draw.tex`
+
+### Implemented content
+
+Created a standalone Overleaf LaTeX file containing three TikZ flow-charts based on the algorithm procedures in Chapter 3:
+
+- variable neighbourhood descent flow-chart;
+- variable neighbourhood search flow-chart;
+- large neighbourhood search flow-chart.
+
+The figures follow the provided `refs/flowchart.jpg` style: vertical rounded boxes, main downward execution flow, left-side loop arrows, and dashed explanatory notes on the right.
+
+### Notes
+
+No changes were needed in `main.tex`, `content.tex`, or `references.bib` because `draw.tex` is intended to be rendered independently on Overleaf.
