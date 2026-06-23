@@ -1,0 +1,132 @@
+\chapter{Biểu diễn nghiệm và các toán tử tìm kiếm cục bộ}
+\label{chap:bieu-dien-nghiem}
+
+\section{Mục tiêu thiết kế}
+
+Bài toán MM-MT-dLARP kết hợp hai quyết định: chọn các điểm triển khai drone cho xe tải và phân chia các cạnh yêu cầu cho các chuyến bay của drone. Theo mô hình gốc, các đường cần phục vụ có thể là đường cong và được rời rạc hóa thành các chuỗi đoạn thẳng; drone chỉ đi vào hoặc rời một đường tại các điểm rời rạc đã chọn \cite{corberan2025mmdlarp}. Vì vậy, các giải thuật tìm kiếm cục bộ trong báo cáo này không thao tác trực tiếp trên hình học liên tục, mà thao tác trên một phiên bản rời rạc của bài toán.
+
+Thiết kế nghiệm được chọn theo ba nguyên tắc. Thứ nhất, một cạnh yêu cầu phải được phục vụ đúng một lần. Thứ hai, mỗi chuyến bay phải bắt đầu và kết thúc tại cùng một điểm triển khai, đồng thời thỏa giới hạn bay của drone. Thứ ba, vì hàm mục tiêu là min--max, các toán tử ưu tiên cải thiện tuyến đang tạo ra giá trị lớn nhất của nghiệm.
+
+\section{Dữ liệu sau rời rạc hóa}
+
+Gọi \(G=(V,E)\) là đồ thị sau rời rạc hóa. Tập cạnh yêu cầu cần được drone bay qua là \(R\subseteq E\). Mỗi cạnh \(e\in R\) có hai đầu mút \(u_e,v_e\) và chi phí phục vụ \(s_e\). Tập điểm triển khai ứng viên là \(D\subseteq V\), depot của xe tải là \(0\), số xe tải tối đa là \(m\), và giới hạn mỗi chuyến bay của drone là \(L\).
+
+Khoảng cách di chuyển không phục vụ giữa hai đỉnh \(i,j\in V\) được ký hiệu là \(c_{ij}\). Một cạnh yêu cầu có thể được phục vụ theo một trong hai hướng. Do đó, một nhiệm vụ phục vụ được viết dưới dạng
+\[
+\tau=(e,\sigma),\qquad e\in R,\quad \sigma\in\{+,-\},
+\]
+trong đó \(\sigma\) xác định drone đi từ \(u_e\) sang \(v_e\) hay ngược lại.
+
+\section{Biểu diễn nghiệm}
+
+Một nghiệm \(S\) được biểu diễn bởi
+\[
+S=\left(D(S),\{\mathcal{F}_d\}_{d\in D(S)}\right),
+\]
+trong đó \(D(S)\subseteq D\) là tập điểm triển khai được chọn và \(|D(S)|\leq m\). Với mỗi điểm triển khai \(d\), \(\mathcal{F}_d\) là danh sách các chuyến bay của drone xuất phát từ \(d\).
+
+Một chuyến bay \(F\in\mathcal{F}_d\) là một dãy có thứ tự các nhiệm vụ
+\[
+F=(d;\tau_1,\tau_2,\ldots,\tau_q;d).
+\]
+Nếu \(a(\tau)\) và \(b(\tau)\) lần lượt là đỉnh bắt đầu và đỉnh kết thúc của nhiệm vụ \(\tau\), chi phí của chuyến bay được tính bởi
+\[
+C(F)=c_{d,a(\tau_1)}
++
+\sum_{i=1}^{q} s_{e_i}
++
+\sum_{i=1}^{q-1} c_{b(\tau_i),a(\tau_{i+1})}
++
+c_{b(\tau_q),d}.
+\]
+Chuyến bay hợp lệ nếu
+\[
+C(F)\leq L.
+\]
+
+Chi phí tại điểm triển khai \(d\) gồm chi phí xe tải đi từ depot đến \(d\) và quay về, cộng với tổng chi phí các chuyến bay xuất phát từ \(d\):
+\[
+C_d(S)=2c_{0d}+\sum_{F\in\mathcal{F}_d} C(F).
+\]
+Hàm mục tiêu của bài toán là giảm tải lớn nhất trong các điểm triển khai được chọn:
+\[
+f(S)=\max_{d\in D(S)} C_d(S).
+\]
+Điểm triển khai gây ra giá trị này được gọi là điểm nghẽn của nghiệm:
+\[
+d^*(S)=\arg\max_{d\in D(S)} C_d(S).
+\]
+
+Một nghiệm được xem là khả thi khi thỏa đồng thời ba điều kiện: không dùng quá \(m\) điểm triển khai, mọi chuyến bay đều có chi phí không vượt quá \(L\), và mỗi cạnh trong \(R\) xuất hiện đúng một lần trong toàn bộ các chuyến bay. Cách biểu diễn này đủ gọn để các toán tử có thể di chuyển, đổi hướng hoặc trao đổi nhiệm vụ mà không cần xây dựng lại toàn bộ nghiệm từ đầu.
+
+\section{Khởi tạo nghiệm}
+
+Nghiệm ban đầu được xây dựng theo hướng tham lam có ngẫu nhiên. Trước hết, thuật toán chọn một số điểm triển khai trong \(D\), ưu tiên các điểm gần depot để không làm tăng chi phí xe tải. Sau đó, mỗi cạnh yêu cầu được gán cho một điểm triển khai gần nó. Với mỗi điểm triển khai, các cạnh đã gán được sắp thành một ``giant tour'' bằng quy tắc láng giềng gần nhất, rồi được cắt thành nhiều chuyến bay sao cho mỗi chuyến không vượt quá giới hạn \(L\).
+
+Việc sinh nhiều nghiệm ban đầu khác nhau giúp tìm kiếm cục bộ tránh phụ thuộc quá mạnh vào một cấu hình xuất phát. Sau khi sinh, mỗi nghiệm được đánh giá lại bằng hàm \(f(S)\) và chỉ các nghiệm khả thi mới được giữ trong tập ứng viên.
+
+\section{Các toán tử tìm kiếm cục bộ}
+
+Các toán tử dưới đây đều nhận một nghiệm khả thi \(S\) và chỉ chấp nhận nghiệm mới \(S'\) nếu \(S'\) vẫn khả thi và \(f(S')<f(S)\). Với các toán tử liên tuyến, vùng tìm kiếm thường tập trung vào điểm nghẽn \(d^*(S)\) nhằm trực tiếp làm giảm thành phần đang quyết định hàm mục tiêu min--max.
+
+\subsection{Tối ưu trong một chuyến bay}
+
+Toán tử này chỉ thay đổi thứ tự và hướng phục vụ của các nhiệm vụ trong cùng một chuyến bay. Một nhiệm vụ được lấy ra khỏi vị trí hiện tại, thử chèn lại vào các vị trí khác với cả hai hướng phục vụ, sau đó giữ thay đổi tốt nhất nếu chi phí chuyến bay giảm và vẫn thỏa \(C(F)\leq L\).
+
+Toán tử này không làm thay đổi điểm triển khai hay phân bổ cạnh giữa các chuyến bay. Vai trò chính của nó là giảm chi phí di chuyển rỗng giữa các cạnh liên tiếp trong cùng một chuyến bay. Đây là lân cận nhỏ, rẻ, nên được ưu tiên dùng sớm trong VND và sau các bước sửa nghiệm của LNS.
+
+\subsection{Phá và sửa nghiệm}
+
+Toán tử phá--sửa lấy ra một số nhiệm vụ từ các chuyến bay tại điểm nghẽn \(d^*(S)\). Các nhiệm vụ bị lấy ra được chèn lại lần lượt vào vị trí khả thi tốt nhất trong toàn bộ nghiệm: có thể vào một chuyến bay đang tồn tại, vào một vị trí khác trong cùng điểm triển khai, sang điểm triển khai khác, hoặc tạo một chuyến bay mới tại một điểm triển khai đã chọn.
+
+Cách sửa nghiệm dựa trên chèn tốt nhất theo hàm mục tiêu hiện tại. Do đó, toán tử này có khả năng chuyển tải từ điểm nghẽn sang các điểm triển khai ít tải hơn, phù hợp với bản chất cân bằng tải của mục tiêu min--max.
+
+\subsection{Dịch chuyển chuỗi \(0\)--\(\ell\)}
+
+Toán tử \(0\)--\(\ell\) chọn một chuỗi gồm \(\ell\) nhiệm vụ liên tiếp từ một chuyến bay tại điểm nghẽn và chuyển chuỗi này sang một chuyến bay khác. Chuyến bay nhận có thể thuộc cùng điểm triển khai hoặc điểm triển khai khác, miễn là không trùng với chính chuyến bay cho. Nếu cần, chuỗi nhiệm vụ cũng có thể tạo thành một chuyến bay mới.
+
+Khác với phá--sửa, toán tử \(0\)--\(\ell\) giữ nguyên thứ tự tương đối của chuỗi nhiệm vụ được chuyển. Điều này giúp bảo toàn một đoạn đường bay đã tương đối tốt, đồng thời vẫn cho phép giảm tải tại điểm nghẽn.
+
+\subsection{Trao đổi chuỗi \(\ell_1\)--\(\ell_2\)}
+
+Toán tử \(\ell_1\)--\(\ell_2\) hoán đổi một chuỗi \(\ell_1\) nhiệm vụ từ một chuyến bay tại điểm nghẽn với một chuỗi \(\ell_2\) nhiệm vụ từ một chuyến bay khác. Sau khi hoán đổi, nghiệm được đánh giá lại và chỉ giữ nếu tất cả chuyến bay vẫn thỏa giới hạn \(L\).
+
+Toán tử này mạnh hơn dịch chuyển một chiều vì nó thay đổi đồng thời hai phần của nghiệm. Trong thực nghiệm, \(\ell_1\) và \(\ell_2\) thường được giới hạn bởi một giá trị nhỏ \(\ell_{\max}\) để giữ thời gian duyệt lân cận ở mức chấp nhận được.
+
+\subsection{Tối ưu chuyến bay tại điểm nghẽn}
+
+Sau khi các lân cận thông thường không còn cải thiện, thuật toán có thể tối ưu lại từng chuyến bay tại điểm nghẽn bằng một thủ tục chính xác hoặc gần chính xác trên tập nhiệm vụ cố định của chuyến bay đó. Khi số nhiệm vụ nhỏ, có thể xem đây là một bài toán định thứ tự có hai hướng phục vụ cho mỗi cạnh; khi số nhiệm vụ lớn hơn, có thể dùng thủ tục tối ưu hóa cục bộ rẻ hơn.
+
+Bước này không thay đổi phân bổ cạnh giữa các điểm triển khai, nhưng giúp kiểm tra xem giá trị tại điểm nghẽn còn có thể giảm chỉ bằng cách sắp xếp lại các nhiệm vụ hay không. Vì chi phí của thủ tục này cao hơn các toán tử khác, nó chỉ được gọi sau khi VND đã đạt cực tiểu cục bộ.
+
+\section{Variable Neighborhood Descent}
+
+Variable Neighborhood Descent (VND) dùng một danh sách lân cận có thứ tự và luôn quay lại lân cận đầu tiên khi tìm được cải thiện. Trong báo cáo này, thứ tự lân cận được dùng là
+\[
+\mathcal{N}_1:\text{ tối ưu trong chuyến bay},\quad
+\mathcal{N}_2:\text{ phá--sửa},\quad
+\mathcal{N}_3:\text{ dịch chuyển }0\text{--}\ell,\quad
+\mathcal{N}_4:\text{ trao đổi }\ell_1\text{--}\ell_2.
+\]
+
+Ý tưởng của VND là ưu tiên các thay đổi rẻ và cục bộ trước, sau đó mới chuyển sang các thay đổi lớn hơn. Khi một lân cận tạo ra nghiệm tốt hơn, nghiệm hiện tại được cập nhật và quá trình quay lại \(\mathcal{N}_1\). Nếu không lân cận nào cải thiện được nghiệm, nghiệm hiện tại được xem là cực tiểu cục bộ theo toàn bộ danh sách lân cận. Cách tổ chức này phù hợp với nguyên lý của tìm kiếm lân cận biến đổi \cite{mladenovic1997vns,hansen2001vns,hansen2010vns}.
+
+\section{Variable Neighborhood Search}
+
+VNS mở rộng VND bằng một bước nhiễu nghiệm, thường gọi là \textit{shaking}. Thay vì dừng tại cực tiểu cục bộ, thuật toán tạo một nghiệm lân cận xa hơn bằng cách áp dụng \(k\) lần phá--sửa ngẫu nhiên. Sau đó, nghiệm bị nhiễu được cải thiện lại bằng VND nhẹ. Nếu nghiệm mới tốt hơn nghiệm hiện tại, thuật toán chấp nhận nghiệm đó và đặt lại \(k=1\); ngược lại, \(k\) tăng dần cho đến \(k_{\max}\).
+
+Trong ngữ cảnh MM-MT-dLARP, VNS có vai trò thoát khỏi các cấu hình mà tải tại điểm nghẽn không thể giảm bằng một dịch chuyển nhỏ. Bước shaking tạo cơ hội thay đổi phân bổ cạnh giữa các điểm triển khai, còn VND nhẹ nhanh chóng sắp xếp lại các chuyến bay sau khi nghiệm bị xáo trộn. Cuối quá trình, nghiệm tốt nhất được cải thiện thêm bằng VND đầy đủ.
+
+\section{Large Neighborhood Search}
+
+Large Neighborhood Search (LNS) tạo lân cận lớn bằng cách tạm thời loại bỏ một tỷ lệ \(\rho\) nhiệm vụ khỏi nghiệm hiện tại, rồi xây dựng lại phần bị thiếu bằng chiến lược chèn tốt nhất. Tư tưởng này bắt nguồn từ việc kết hợp phá nghiệm và sửa nghiệm trong các bài toán định tuyến \cite{shaw1998lns,ropke2006alns,pisinger2007vrp}.
+
+Với nghiệm \(S\), bước phá chọn ngẫu nhiên khoảng \(\rho |R|\) nhiệm vụ đang được phục vụ và loại chúng khỏi các chuyến bay. Bước sửa xét từng nhiệm vụ bị loại bỏ, thử mọi điểm triển khai, mọi chuyến bay, mọi vị trí chèn và cả hai hướng phục vụ; phương án khả thi có giá trị mục tiêu tốt nhất được chọn. Sau khi sửa xong, nghiệm được cải thiện nhanh bằng toán tử tối ưu trong chuyến bay.
+
+LNS khác VNS ở mức độ thay đổi nghiệm. VNS thường dùng shaking như một nhiễu có kiểm soát quanh nghiệm hiện tại, còn LNS phá một phần lớn hơn của nghiệm để tái phân bổ lại tải. Vì vậy, LNS phù hợp khi nghiệm hiện tại bị kẹt do nhiều cạnh đã được gán sai điểm triển khai, khiến các toán tử nhỏ khó sửa từng bước.
+
+\section{Tương thích với pha chia nhỏ cạnh}
+
+Do bài toán gốc chứa các đường có thể là đường cong, việc rời rạc hóa ban đầu có thể chưa đủ mịn. Sau khi có một nghiệm tốt trên đồ thị thô, các cạnh đang được sử dụng có thể được chia nhỏ bằng cách thêm điểm giữa trên chuỗi đoạn thẳng. Nghiệm cũ được ánh xạ sang đồ thị mới bằng cách thay một cạnh cha bởi các cạnh con tương ứng, sau đó tiếp tục áp dụng các toán tử tìm kiếm cục bộ.
+
+Cơ chế này giúp thuật toán cân bằng giữa tốc độ và độ chính xác. Ở giai đoạn đầu, nghiệm được tìm trên đồ thị nhỏ để giảm chi phí tính toán. Ở các giai đoạn sau, chỉ những vùng có khả năng cải thiện mới được làm mịn thêm. Biểu diễn nghiệm theo danh sách nhiệm vụ giúp việc chuyển đổi giữa hai mức rời rạc hóa tương đối tự nhiên: mỗi nhiệm vụ vẫn là một cạnh yêu cầu có hướng, chỉ khác ở mức chi tiết của cạnh đó.

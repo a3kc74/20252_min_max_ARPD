@@ -1,0 +1,160 @@
+\chapter{Giải thuật Large Neighborhood Search cho MM-MT-dLARP}
+\label{chap:lns}
+
+\section{Vai trò của LNS trong bài toán MM-MT-dLARP}
+\label{sec:lns-role}
+
+Large Neighborhood Search (LNS) là một khung tìm kiếm cục bộ mở rộng, trong đó nghiệm hiện tại được cải thiện bằng cách phá một phần nghiệm rồi sửa lại phần bị phá \cite{shaw1998lns,ropke2006alns,pisinger2007vrp}. Khác với các lân cận nhỏ chỉ thay đổi một vài cạnh hoặc một vài vị trí trong chuyến bay, LNS cho phép tái cấu trúc một phần lớn của nghiệm. Vì vậy, LNS phù hợp với các bài toán định tuyến có không gian nghiệm lớn và nhiều ràng buộc khả thi.
+
+Với bài toán MM-MT-dLARP, một nghiệm phải quyết định đồng thời tập điểm triển khai drone được chọn, cách phân bố các cạnh yêu cầu cho từng điểm triển khai, và cách chia các cạnh đó thành nhiều chuyến bay khả thi \cite{corberan2025mmdlarp}. Tương tự Chương~\ref{chap:vns}, cho một nghiệm $S$, ký hiệu $D(S)$ là tập điểm triển khai được chọn và $\mathcal{F}_d(S)$ là tập các chuyến bay gắn với điểm triển khai $d$. Chi phí của một chuyến bay $F$ được ký hiệu bởi $C(F)$. Hàm mục tiêu min--max được viết dưới dạng
+\begin{equation}
+f(S) =
+\max_{d \in D(S)}
+\left(
+2c_{0d}
++
+\sum_{F \in \mathcal{F}_d(S)} C(F)
+\right),
+\label{eq:lns-objective}
+\end{equation}
+trong đó $c_{0d}$ là khoảng cách từ depot đến điểm triển khai $d$.
+
+Do mục tiêu là giảm tải lớn nhất trong các điểm triển khai được sử dụng, cải thiện nghiệm thường gắn với việc giảm tải tại điểm triển khai nghẽn. Ta gọi
+\begin{equation}
+b(S) =
+\arg\max_{d \in D(S)}
+\left(
+2c_{0d}
++
+\sum_{F \in \mathcal{F}_d(S)} C(F)
+\right)
+\label{eq:lns-bottleneck}
+\end{equation}
+là điểm triển khai nghẽn của nghiệm $S$. Trong LNS, bước phá nghiệm thường ưu tiên tác động lên các chuyến bay thuộc $b(S)$, còn bước sửa nghiệm tìm cách chèn lại các cạnh bị loại sao cho tải giữa các điểm triển khai được cân bằng hơn.
+
+\section{Khởi tạo nghiệm}
+\label{sec:lns-initialization}
+
+LNS bắt đầu từ một tập nghiệm khả thi thay vì một nghiệm duy nhất. Cách xây dựng nghiệm ban đầu tương tự như trong VNS. Trước hết, chọn một số điểm triển khai không vượt quá số xe tải cho phép; các điểm gần depot được ưu tiên hơn vì có chi phí xe tải nhỏ hơn. Tiếp theo, mỗi cạnh yêu cầu được gán cho một điểm triển khai đã chọn, với xác suất lớn hơn cho các điểm triển khai gần cạnh đó. Cuối cùng, tại mỗi điểm triển khai, các cạnh được sắp thành một hành trình lớn rồi tách thành nhiều chuyến bay sao cho mỗi chuyến không vượt quá giới hạn bay $L$.
+
+Sau khi sinh tập nghiệm ban đầu, mỗi nghiệm được cải thiện nhanh bằng một VND nhẹ. Một số nghiệm tốt nhất được giữ lại làm nghiệm xuất phát cho LNS. Cách này giúp thuật toán khai thác nhiều cấu trúc nghiệm khác nhau, thay vì phụ thuộc hoàn toàn vào một nghiệm khởi tạo ngẫu nhiên.
+
+\section{Cơ chế destroy--repair trong LNS}
+\label{sec:lns-destroy-repair}
+
+Trọng tâm của LNS là cơ chế destroy--repair. Với nghiệm hiện tại $S$, thuật toán loại bỏ một tập cạnh yêu cầu khỏi nghiệm, sau đó chèn lại các cạnh này vào những vị trí khả thi. Nếu tập cạnh bị loại đủ lớn, nghiệm sau repair có thể khác đáng kể nghiệm ban đầu, từ đó giúp thuật toán thoát khỏi cực trị cục bộ.
+
+\subsection{Toán tử destroy}
+\label{subsec:lns-destroy}
+
+Toán tử destroy chọn một tập cạnh $Q$ đang được phục vụ trong nghiệm và loại chúng khỏi các chuyến bay hiện tại. Kích thước của $Q$ được xác định bởi tỷ lệ phá $\rho$:
+\begin{equation}
+|Q| =
+\max\left\{1,\left\lfloor \rho |E_R| \right\rfloor\right\},
+\label{eq:lns-destroy-size}
+\end{equation}
+trong đó $E_R$ là tập các cạnh yêu cầu.
+
+Có hai cách chọn cạnh bị loại được sử dụng. Cách thứ nhất là chọn ngẫu nhiên các cạnh trong nghiệm. Cách này tạo đa dạng và giúp thuật toán không bị phụ thuộc quá mạnh vào cấu trúc hiện tại. Cách thứ hai là chọn ưu tiên các cạnh thuộc điểm triển khai nghẽn $b(S)$. Cách này phù hợp với mục tiêu min--max vì nó trực tiếp làm giảm tải tại điểm triển khai đang quyết định giá trị hàm mục tiêu.
+
+Sau khi loại bỏ $Q$, các chuyến bay còn lại vẫn giữ nguyên thứ tự tương đối. Nghiệm tạm thời có thể chưa phục vụ đầy đủ tất cả các cạnh yêu cầu, nhưng vẫn giữ được phần lớn cấu trúc tốt của nghiệm cũ. Tính đầy đủ của nghiệm sẽ được khôi phục trong bước repair.
+
+\subsection{Toán tử repair}
+\label{subsec:lns-repair}
+
+Toán tử repair lần lượt chèn lại các cạnh trong $Q$. Với một cạnh $e \in Q$, thuật toán xét các khả năng chèn $e$ vào một chuyến bay hiện có, chèn theo một trong hai hướng phục vụ, hoặc tạo một chuyến bay mới tại một điểm triển khai đã được chọn. Mỗi phương án chỉ được chấp nhận nếu chuyến bay sau khi chèn vẫn thỏa mãn giới hạn bay $L$.
+
+Trong số các phương án khả thi, thuật toán chọn phương án làm giảm tốt nhất giá trị mục tiêu sau khi chèn. Nếu $p$ là vị trí chèn, $o$ là hướng phục vụ của cạnh, và $S \oplus (e,d,F,p,o)$ là nghiệm thu được sau khi chèn $e$ vào chuyến bay $F \in \mathcal{F}_d(S)$, phương án được chọn là
+\begin{equation}
+\begin{aligned}
+(d^\star,F^\star,p^\star,o^\star)
+&=
+\operatorname*{argmin}_{(d,F,p,o)}
+f\bigl(S \oplus (e,d,F,p,o)\bigr).
+\end{aligned}
+\label{eq:lns-best-insertion}
+\end{equation}
+
+Quy tắc chèn này mang tính tham lam vì mỗi cạnh được đặt vào vị trí tốt nhất tại thời điểm xét. Tuy nhiên, do nhiều cạnh đã bị loại cùng lúc, nghiệm sau repair vẫn có thể thay đổi đáng kể so với nghiệm trước destroy. Đây là điểm khác biệt chính giữa LNS và các lân cận nhỏ trong tìm kiếm cục bộ.
+
+\section{Tăng cường cục bộ sau repair}
+\label{sec:lns-local-improvement}
+
+Sau khi tất cả các cạnh bị loại được chèn lại, nghiệm thu được tiếp tục được cải thiện bằng một VND nhẹ. Trong vòng lặp chính của LNS, VND nhẹ chỉ gồm các thao tác có chi phí thấp, chẳng hạn tối ưu thứ tự phục vụ bên trong từng chuyến bay và dịch chuyển một số cạnh ngắn giữa các chuyến bay. Mục tiêu của bước này là loại bỏ các sai lệch rõ ràng do repair tham lam tạo ra mà không làm tăng quá nhiều thời gian tính toán.
+
+Ở cuối quá trình LNS, nghiệm tốt nhất được cải thiện thêm bằng VND đầy đủ. VND đầy đủ xét lại các nhóm lân cận đã trình bày ở Chương~\ref{chap:bieu-dien-nghiem}, bao gồm tối ưu bên trong chuyến bay, destroy--repair, dịch chuyển chuỗi $0$--$\ell$, và trao đổi chuỗi $\ell_1$--$\ell_2$. Cách tổ chức này giúp LNS vừa có khả năng tạo bước nhảy lớn trong không gian nghiệm, vừa khai thác sâu quanh các nghiệm hứa hẹn.
+
+\section{Quy tắc chấp nhận và cập nhật nghiệm}
+\label{sec:lns-acceptance}
+
+Trong chương này, LNS sử dụng quy tắc chấp nhận cải thiện nghiêm ngặt. Nghĩa là nghiệm mới $S'$ chỉ thay thế nghiệm hiện tại $S$ nếu
+\begin{equation}
+f(S') < f(S).
+\label{eq:lns-acceptance}
+\end{equation}
+Quy tắc này đơn giản, ổn định và đồng bộ với cách chấp nhận nghiệm trong VNS. Với mục tiêu min--max, mỗi lần chấp nhận đều tương ứng với việc giảm trực tiếp tải lớn nhất trong nghiệm.
+
+Nghiệm tốt nhất toàn cục $S^*$ được cập nhật độc lập với nghiệm hiện tại. Nếu nghiệm sau repair và tăng cường cục bộ có giá trị tốt hơn $S^*$, thuật toán cập nhật $S^* \leftarrow S'$. Sau khi đạt giới hạn vòng lặp hoặc giới hạn thời gian, $S^*$ được dùng làm nghiệm đầu vào cho bước tinh chỉnh cuối cùng.
+
+\section{Pha chia nhỏ điểm phục vụ}
+\label{sec:lns-splitting}
+
+Trong MM-MT-dLARP, các điểm phục vụ trên cạnh yêu cầu được xét thông qua một quá trình rời rạc hoá. Do đó, chất lượng nghiệm phụ thuộc không chỉ vào cách phân công cạnh cho điểm triển khai, mà còn vào mức chi tiết của tập điểm rời rạc đang được sử dụng.
+
+Sau khi LNS tìm được các nghiệm tốt trên thể hiện rời rạc ban đầu, thuật toán áp dụng một pha chia nhỏ. Các điểm mới, thường là trung điểm của các khoảng hiện có trên cạnh yêu cầu, được bổ sung để tạo một thể hiện tinh hơn. Nghiệm tốt nhất hiện tại được chuyển sang thể hiện mới và tiếp tục được cải thiện bằng LNS hoặc VND.
+
+Quá trình chia nhỏ có thể được thực hiện thích nghi. Thay vì làm mịn toàn bộ mạng lưới, thuật toán chỉ tiếp tục chia nhỏ các vùng có điểm mới được sử dụng trong nghiệm tốt. Nhờ đó, không gian nghiệm được mở rộng quanh những vùng có tiềm năng cải thiện, trong khi chi phí tính toán vẫn được kiểm soát. Cơ chế này kế thừa tinh thần của thuật toán trong \cite{corberan2025mmdlarp} và kết hợp tự nhiên với LNS.
+
+\section{Khung thuật toán LNS}
+\label{sec:lns-algorithm}
+
+Thuật toán LNS cho MM-MT-dLARP có thể mô tả cô đọng như sau.
+
+\begin{enumerate}[label=\textbf{Bước \arabic*.}, leftmargin=1.6cm]
+\item Tạo một tập nghiệm ban đầu khả thi và cải thiện nhanh từng nghiệm bằng VND nhẹ.
+\item Chọn một số nghiệm tốt nhất làm nghiệm xuất phát cho LNS.
+\item Với mỗi nghiệm xuất phát, đặt nghiệm hiện tại là $S$ và nghiệm tốt nhất toàn cục là $S^*$.
+\item Chọn một tập cạnh $Q$ để loại khỏi nghiệm bằng toán tử destroy.
+\item Chèn lại các cạnh trong $Q$ bằng toán tử repair, thu được nghiệm $S'$.
+\item Cải thiện $S'$ bằng VND nhẹ, thu được nghiệm $\bar{S}$.
+\item Nếu $f(\bar{S}) < f(S)$, cập nhật $S \leftarrow \bar{S}$. Nếu $\bar{S}$ cũng tốt hơn $S^*$, cập nhật $S^* \leftarrow \bar{S}$.
+\item Lặp lại các bước destroy, repair và tăng cường cục bộ cho đến khi đạt số vòng lặp hoặc giới hạn thời gian.
+\item Áp dụng VND đầy đủ lên các nghiệm tốt nhất sau LNS.
+\item Thực hiện pha chia nhỏ điểm phục vụ cho một số nghiệm tốt nhất.
+\item Trả về nghiệm có giá trị hàm mục tiêu nhỏ nhất.
+\end{enumerate}
+
+\section{Tham số chính}
+\label{sec:lns-parameters}
+
+Các tham số của LNS được chia thành ba nhóm: tham số khởi tạo, tham số destroy--repair và tham số điều khiển vòng lặp. Bảng~\ref{tab:lns-parameters} tóm tắt các tham số quan trọng.
+
+\begin{table}[H]
+\centering
+\caption{Các tham số chính của LNS}
+\label{tab:lns-parameters}
+\begin{tabular}{p{3cm}p{9cm}}
+\toprule
+\textbf{Tham số} & \textbf{Ý nghĩa} \\
+\midrule
+$P_{\max}$ & Số nghiệm tối đa trong tập nghiệm khởi tạo. \\
+$\rho$ & Tỷ lệ cạnh bị loại trong một lần destroy. \\
+$n_{\max}$ & Số cạnh tối đa bị loại trong một lần destroy, nếu dùng giới hạn tuyệt đối. \\
+$I_{\text{repair}}$ & Số lần thử repair hoặc số phương án chèn được xét trước khi dừng toán tử. \\
+$I_{\max}$ & Số vòng lặp chính tối đa của LNS. \\
+$T_{\max}$ & Giới hạn thời gian tính toán, nếu được sử dụng. \\
+$P_{\text{split}}$ & Số nghiệm tốt nhất được đưa vào pha chia nhỏ điểm phục vụ. \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Tỷ lệ phá $\rho$ là tham số quan trọng nhất của LNS. Nếu $\rho$ quá nhỏ, thuật toán gần với tìm kiếm cục bộ thông thường và khó thoát khỏi cực trị cục bộ. Nếu $\rho$ quá lớn, bước repair trở nên tốn kém và có thể phá vỡ quá nhiều cấu trúc tốt của nghiệm hiện tại. Vì vậy, $\rho$ thường được chọn ở mức trung bình để cân bằng giữa khai thác và khám phá.
+
+Số nghiệm được đưa vào pha chia nhỏ cũng ảnh hưởng đến chất lượng và thời gian chạy. Nếu chỉ chia nhỏ nghiệm tốt nhất, thuật toán nhanh hơn nhưng dễ phụ thuộc vào một cấu trúc nghiệm duy nhất. Nếu chia nhỏ nhiều nghiệm tốt, thuật toán có cơ hội phát hiện cấu trúc tốt hơn trên thể hiện tinh hơn, đổi lại chi phí tính toán cao hơn.
+
+\section{Nhận xét}
+\label{sec:lns-discussion}
+
+LNS phù hợp với MM-MT-dLARP vì bài toán có cấu trúc phân công phức tạp giữa điểm triển khai, chuyến bay và cạnh yêu cầu. Các lân cận nhỏ thường chỉ cải thiện được thứ tự phục vụ hoặc trao đổi một số ít cạnh, trong khi LNS có thể tái cấu trúc đồng thời nhiều chuyến bay. Điều này đặc biệt quan trọng với mục tiêu min--max, nơi một cải thiện tốt thường đến từ việc chuyển tải ra khỏi điểm triển khai nghẽn thay vì chỉ giảm tổng chi phí cục bộ.
+
+So với VNS, LNS sử dụng lân cận lớn hơn và phụ thuộc nhiều hơn vào chất lượng của bước repair. Nếu repair đủ tốt, thuật toán có thể tạo ra các bước nhảy mạnh trong không gian nghiệm mà vẫn duy trì tính khả thi. Ngược lại, nếu repair quá tham lam, nghiệm thu được có thể hợp lệ nhưng chưa cân bằng tốt. Vì vậy, trong thiết kế được sử dụng, LNS được kết hợp với VND nhẹ sau mỗi lần repair, VND đầy đủ ở cuối quá trình, và pha chia nhỏ điểm phục vụ cho các nghiệm hứa hẹn. Sự kết hợp này giúp thuật toán vừa đa dạng hoá vùng tìm kiếm, vừa khai thác sâu quanh các cấu trúc nghiệm tốt.

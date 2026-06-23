@@ -1,0 +1,75 @@
+\begin{thebibliography}{10}
+
+\bibitem{campbell2018darp}
+James~F. Campbell, {'A}ngel Corber{'a}n, Isaac Plana, and Jos{'e}~Mar{'i}a
+  Sanchis.
+\newblock Drone arc routing problems.
+\newblock {\em Networks}, 72(4):543--559, 2018.
+
+\bibitem{campbell2021kdrone}
+James~F. Campbell, {'A}ngel Corber{'a}n, Isaac Plana, Jos{'e}~Mar{'i}a Sanchis,
+  and Pau Segura.
+\newblock Solving the length-constrained {K}-drones rural postman problem.
+\newblock {\em European Journal of Operational Research}, 292(1):60--72, 2021.
+
+\bibitem{campbell2022polyhedral}
+James~F. Campbell, {'A}ngel Corber{'a}n, Isaac Plana, Jos{'e}~Mar{'i}a Sanchis,
+  and Pau Segura.
+\newblock Polyhedral analysis and a new algorithm for the length-constrained
+  {K}-drones rural postman problem.
+\newblock {\em Computational Optimization and Applications}, 83:67--109, 2022.
+
+\bibitem{chung2020droneTruck}
+Sung~Hoon Chung, Bipan Sah, and Jihye Lee.
+\newblock Optimization for drone and drone-truck combined operations: A review
+  of the state of the art and future directions.
+\newblock {\em Computers \& Operations Research}, 123:105004, 2020.
+
+\bibitem{corberan2025mmdlarp}
+Teresa Corber{'a}n, Isaac Plana, and Jos{'e}~Mar{'i}a Sanchis.
+\newblock The min max multi-trip drone location arc routing problem.
+\newblock {\em Computers \& Operations Research}, 174:106894, 2025.
+
+\bibitem{hansen2001vns}
+Pierre Hansen and Nenad Mladenovi{'c}.
+\newblock Variable neighborhood search: Principles and applications.
+\newblock {\em European Journal of Operational Research}, 130(3):449--467,
+  2001.
+
+\bibitem{hansen2010vns}
+Pierre Hansen, Nenad Mladenovi{'c}, and Jos{'e}~A. Moreno~P{'e}rez.
+\newblock Variable neighbourhood search: Methods and applications.
+\newblock {\em Annals of Operations Research}, 175:367--407, 2010.
+
+\bibitem{macrina2020droneReview}
+Giacomo Macrina, Luigi Di~Puglia~Pugliese, Francesca Guerriero, and Gilbert
+  Laporte.
+\newblock Drone-aided routing: A literature review.
+\newblock {\em Transportation Research Part C: Emerging Technologies},
+  120:102762, 2020.
+
+\bibitem{mladenovic1997vns}
+Nenad Mladenovi{'c} and Pierre Hansen.
+\newblock Variable neighborhood search.
+\newblock {\em Computers \& Operations Research}, 24(11):1097--1100, 1997.
+
+\bibitem{pisinger2007vrp}
+David Pisinger and Stefan Ropke.
+\newblock A general heuristic for vehicle routing problems.
+\newblock {\em Computers \& Operations Research}, 34(8):2403--2435, 2007.
+
+\bibitem{ropke2006alns}
+Stefan Ropke and David Pisinger.
+\newblock An adaptive large neighborhood search heuristic for the pickup and
+  delivery problem with time windows.
+\newblock {\em Transportation Science}, 40(4):455--472, 2006.
+
+\bibitem{shaw1998lns}
+Paul Shaw.
+\newblock Using constraint programming and local search methods to solve
+  vehicle routing problems.
+\newblock In {\em Principles and Practice of Constraint Programming -- CP
+  1998}, volume 1520 of {\em Lecture Notes in Computer Science}, pages
+  417--431. Springer, 1998.
+
+\end{thebibliography}

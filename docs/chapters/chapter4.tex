@@ -1,0 +1,149 @@
+\chapter{Giải thuật Variable Neighborhood Search cho MM-MT-dLARP}
+\label{chap:vns}
+
+\section{Vai trò của VNS trong bài toán MM-MT-dLARP}
+\label{sec:vns-role}
+
+Variable Neighborhood Search (VNS) là một khung tìm kiếm cục bộ dùng nhiều cấu trúc lân cận khác nhau để thoát khỏi cực trị cục bộ \cite{mladenovic1997vns,hansen2001vns,hansen2010vns}. Với bài toán MM-MT-dLARP, một nghiệm không chỉ quyết định các điểm triển khai drone được mở mà còn quyết định cách chia các cạnh yêu cầu thành nhiều chuyến bay xuất phát và quay về cùng một điểm triển khai \cite{corberan2025mmdlarp}. Do đó, không gian nghiệm có hai mức quyết định: mức phân bố công việc giữa các điểm triển khai và mức thứ tự phục vụ trong từng chuyến bay.
+
+Trong chương này, VNS được sử dụng như một thủ tục cải thiện nghiệm trên một thể hiện đã rời rạc hoá. Cho một nghiệm \(S\), ký hiệu \(D(S)\) là tập điểm triển khai được chọn và \(\mathcal{F}_d(S)\) là tập các chuyến bay gắn với điểm triển khai \(d\). Chi phí của một chuyến bay \(F\) được ký hiệu bởi \(C(F)\), bao gồm chi phí di chuyển từ điểm triển khai, phục vụ các cạnh trong chuyến bay và quay về điểm triển khai. Hàm mục tiêu min--max được viết dưới dạng
+\begin{equation}
+f(S) =
+\max_{d \in D(S)}
+\left(
+2c_{0d}
++
+\sum_{F \in \mathcal{F}_d(S)} C(F)
+\right),
+\label{eq:vns-objective}
+\end{equation}
+trong đó \(c_{0d}\) là khoảng cách từ depot đến điểm triển khai \(d\).
+
+Do mục tiêu là cực đại theo điểm triển khai, mỗi nghiệm thường bị chi phối bởi một điểm triển khai nghẽn cổ chai. Ta gọi
+\begin{equation}
+b(S) =
+\arg\max_{d \in D(S)}
+\left(
+2c_{0d}
++
+\sum_{F \in \mathcal{F}_d(S)} C(F)
+\right)
+\label{eq:vns-bottleneck}
+\end{equation}
+là điểm triển khai nghẽn của nghiệm \(S\). Các toán tử chính của VNS ưu tiên tác động lên \(b(S)\) nhằm giảm trực tiếp giá trị mục tiêu.
+
+\section{Khởi tạo nghiệm}
+\label{sec:vns-initialization}
+
+VNS bắt đầu từ một tập nghiệm khả thi thay vì một nghiệm duy nhất. Cách xây dựng được thực hiện theo ba ý tưởng chính. Trước hết, chọn một số điểm triển khai không vượt quá số xe tải cho phép; các điểm gần depot được ưu tiên hơn vì chi phí xe tải \(2c_{0d}\) nhỏ hơn. Tiếp theo, mỗi cạnh yêu cầu được gán cho một điểm triển khai đã chọn, với xác suất lớn hơn cho các điểm triển khai gần cạnh đó. Cuối cùng, tại mỗi điểm triển khai, các cạnh được nối thành một hành trình lớn rồi tách thành nhiều chuyến bay sao cho mỗi chuyến không vượt quá giới hạn bay \(L\).
+
+Sau khi tạo tập nghiệm ban đầu, mỗi nghiệm được cải thiện nhanh bằng một VND nhẹ. Nghiệm có giá trị \(f(S)\) nhỏ nhất được chọn làm nghiệm hiện tại của VNS. Cách này giúp thuật toán tránh phụ thuộc quá mạnh vào một nghiệm khởi tạo ngẫu nhiên, đồng thời vẫn giữ chi phí khởi tạo ở mức thấp.
+
+\section{Các lân cận sử dụng trong VNS}
+\label{sec:vns-neighborhoods}
+
+Các lân cận được thiết kế để bảo toàn tính khả thi: mỗi cạnh yêu cầu được phục vụ đúng một lần, mỗi chuyến bay bắt đầu và kết thúc tại cùng một điểm triển khai, và độ dài chuyến bay không vượt quá \(L\). Sau mỗi thao tác, nghiệm chỉ được chấp nhận nếu khả thi và cải thiện hàm mục tiêu.
+
+\subsection{Tối ưu bên trong một chuyến bay}
+\label{subsec:vns-intraroute}
+
+Lân cận này giữ nguyên tập cạnh của từng chuyến bay nhưng thay đổi thứ tự phục vụ và hướng đi qua từng cạnh. Mục tiêu là giảm \(C(F)\) mà không làm thay đổi phân bố công việc giữa các điểm triển khai. Đây là bước tăng cường cục bộ rẻ và thường được gọi trước các thao tác trao đổi lớn hơn.
+
+Với các chuyến bay nhỏ, bài toán sắp xếp lại thứ tự cạnh có thể được giải chính xác hoặc gần chính xác bằng bộ tối ưu chuyến bay. Với các chuyến bay lớn hơn, ta chỉ thực hiện cải thiện cục bộ để tránh làm tăng thời gian tính toán.
+
+\subsection{Destroy--repair trên điểm triển khai nghẽn}
+\label{subsec:vns-destroy-repair}
+
+Destroy--repair loại bỏ một số cạnh khỏi các chuyến bay của điểm triển khai nghẽn \(b(S)\), sau đó chèn lại từng cạnh vào vị trí tốt nhất còn khả thi. Vị trí chèn có thể nằm trong một chuyến bay hiện có hoặc tạo thành một chuyến bay mới tại một điểm triển khai đã chọn.
+
+Toán tử này vừa có khả năng giảm tải cho điểm triển khai nghẽn, vừa cho phép tái phân bố một phần công việc sang các điểm triển khai khác. Vì vậy, nó đóng vai trò cầu nối giữa tìm kiếm cục bộ nhỏ và nhiễu loạn lớn trong VNS.
+
+\subsection{Dịch chuyển chuỗi \(0\)--\(\ell\)}
+\label{subsec:vns-zero-l}
+
+Lân cận \(0\)--\(\ell\) chọn một chuỗi liên tiếp gồm \(\ell\) cạnh trong một chuyến bay của điểm triển khai nghẽn và chuyển chuỗi này sang một chuyến bay khác. Trường hợp đích có thể là một chuyến bay đã tồn tại hoặc một chuyến bay mới. Tham số \(\ell\) tăng dần từ \(1\) đến \(\ell_{\max}\); khi tìm được cải thiện, thuật toán quay lại xét từ \(\ell=1\).
+
+Lân cận này phù hợp với bài toán min--max vì nó trực tiếp rút bớt tải khỏi điểm triển khai đang quyết định giá trị mục tiêu. Tuy nhiên, mọi dịch chuyển đều phải kiểm tra lại giới hạn bay của chuyến nhận.
+
+\subsection{Trao đổi chuỗi \(\ell_1\)--\(\ell_2\)}
+\label{subsec:vns-l1-l2}
+
+Lân cận \(\ell_1\)--\(\ell_2\) hoán đổi một chuỗi \(\ell_1\) cạnh từ điểm triển khai nghẽn với một chuỗi \(\ell_2\) cạnh từ chuyến bay khác. So với \(0\)--\(\ell\), thao tác này cân bằng hơn vì điểm triển khai nghẽn không chỉ chuyển công việc đi mà còn nhận lại một phần công việc khác có thể phù hợp hơn về mặt hình học.
+
+Các giá trị \(\ell_1,\ell_2\) được giới hạn bởi \(\ell_{\max}\) để kiểm soát độ phức tạp. Khi một cải thiện được tìm thấy, quá trình xét chuỗi được khởi động lại từ kích thước nhỏ nhất.
+
+\section{VND như thủ tục tăng cường}
+\label{sec:vns-vnd}
+
+Trong VNS, Variable Neighborhood Descent (VND) được dùng làm thủ tục tăng cường sau mỗi lần nhiễu loạn. VND xét tuần tự một danh sách lân cận. Nếu một lân cận tạo ra nghiệm tốt hơn, nghiệm hiện tại được cập nhật và quá trình xét lân cận quay lại từ đầu. Nếu không có lân cận nào cải thiện, nghiệm được xem là cực trị cục bộ đối với danh sách lân cận đang xét.
+
+Danh sách VND đầy đủ gồm bốn nhóm thao tác:
+\begin{enumerate}[label=(\roman*), leftmargin=1.2cm]
+    \item tối ưu bên trong từng chuyến bay;
+    \item destroy--repair;
+    \item dịch chuyển chuỗi \(0\)--\(\ell\);
+    \item trao đổi chuỗi \(\ell_1\)--\(\ell_2\).
+\end{enumerate}
+
+Sau khi VND đầy đủ dừng, có thể áp dụng thêm một bước tối ưu chính xác cho các chuyến bay thuộc điểm triển khai nghẽn. Nếu bước này cải thiện nghiệm, VND được khởi động lại.
+
+Trong vòng lặp ngoài của VNS, ta dùng một VND nhẹ hơn, chỉ gồm tối ưu bên trong chuyến bay và dịch chuyển \(0\)--\(\ell\). Lý do là giai đoạn này được gọi lặp lại nhiều lần sau shaking; dùng VND đầy đủ ở mọi vòng có thể làm thuật toán tiêu tốn quá nhiều thời gian cho tăng cường cục bộ. VND đầy đủ được dành cho bước cuối cùng để tinh chỉnh nghiệm tốt nhất tìm được.
+
+\section{Cơ chế shaking}
+\label{sec:vns-shaking}
+
+Shaking là bước tạo nhiễu có kiểm soát nhằm đưa nghiệm ra khỏi cực trị cục bộ. Với mức lân cận \(k\), thuật toán áp dụng \(k\) lần destroy--repair liên tiếp lên nghiệm hiện tại. Khi \(k\) nhỏ, nghiệm mới chỉ khác nhẹ so với nghiệm gốc; khi \(k\) tăng, mức nhiễu lớn hơn và khả năng rời khỏi vùng tìm kiếm hiện tại cũng cao hơn.
+
+Cách shaking này phù hợp với cấu trúc MM-MT-dLARP vì nó không phá toàn bộ nghiệm. Các chuyến bay và điểm triển khai đang tốt được giữ lại phần lớn, trong khi một phần công việc tại điểm triển khai nghẽn được phân bố lại. Nhờ đó, shaking tạo đa dạng nhưng vẫn tận dụng được cấu trúc của nghiệm hiện tại.
+
+\section{Khung thuật toán VNS}
+\label{sec:vns-algorithm}
+
+Thuật toán VNS cho MM-MT-dLARP có thể mô tả cô đọng như sau.
+
+\begin{enumerate}[label=\textbf{Bước \arabic*.}, leftmargin=1.6cm]
+    \item Tạo một tập nghiệm ban đầu khả thi và cải thiện nhanh từng nghiệm bằng VND nhẹ.
+    \item Chọn nghiệm tốt nhất làm nghiệm hiện tại \(S\) và nghiệm tốt nhất toàn cục \(S^*\).
+    \item Đặt mức shaking \(k=1\).
+    \item Tạo nghiệm nhiễu \(S'\) từ \(S\) bằng shaking mức \(k\).
+    \item Cải thiện \(S'\) bằng VND nhẹ, thu được nghiệm \(\bar{S}\).
+    \item Nếu \(f(\bar{S}) < f(S)\), cập nhật \(S \leftarrow \bar{S}\) và đặt lại \(k=1\). Nếu \(\bar{S}\) cũng tốt hơn \(S^*\), cập nhật \(S^* \leftarrow \bar{S}\).
+    \item Nếu không cải thiện, tăng \(k \leftarrow k+1\). Khi \(k > k_{\max}\), bắt đầu lại từ \(k=1\) cho vòng lặp ngoài tiếp theo.
+    \item Khi đạt số vòng lặp hoặc giới hạn thời gian, áp dụng VND đầy đủ lên \(S^*\) và trả về nghiệm cuối cùng.
+\end{enumerate}
+
+Quy tắc chấp nhận trong chương này là chấp nhận cải thiện nghiêm ngặt. Nghĩa là một nghiệm mới chỉ thay thế nghiệm hiện tại khi giá trị mục tiêu giảm. Quy tắc này đơn giản, ổn định và phù hợp với mục tiêu min--max vì mọi cải thiện đều làm giảm trực tiếp tải lớn nhất trong nghiệm.
+
+\section{Tham số chính}
+\label{sec:vns-parameters}
+
+Các tham số của VNS được chia thành ba nhóm: tham số khởi tạo, tham số lân cận và tham số điều khiển vòng lặp. Bảng \ref{tab:vns-parameters} tóm tắt các tham số quan trọng.
+
+\begin{table}[H]
+\centering
+\caption{Các tham số chính của VNS}
+\label{tab:vns-parameters}
+\begin{tabular}{p{3cm}p{9cm}}
+\toprule
+\textbf{Tham số} & \textbf{Ý nghĩa} \\
+\midrule
+\(P_{\max}\) & Số nghiệm tối đa trong tập nghiệm khởi tạo. \\
+\(n_{\max}\) & Số cạnh tối đa bị loại trong một lần destroy. \\
+\(I_{\text{repair}}\) & Số lần thử destroy--repair trước khi dừng toán tử. \\
+\(\ell_{\max}\) & Độ dài chuỗi lớn nhất trong các lân cận \(0\)--\(\ell\) và \(\ell_1\)--\(\ell_2\). \\
+\(k_{\max}\) & Mức shaking lớn nhất trước khi quay lại mức nhỏ nhất. \\
+\(I_{\max}\) & Số vòng lặp ngoài tối đa của VNS. \\
+\(T_{\max}\) & Giới hạn thời gian tính toán, nếu được sử dụng. \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Việc chọn tham số phản ánh sự đánh đổi giữa thời gian và chất lượng nghiệm. Giá trị lớn của \(k_{\max}\), \(\ell_{\max}\) hoặc \(I_{\max}\) giúp thuật toán khảo sát không gian nghiệm rộng hơn, nhưng làm tăng thời gian chạy. Trong thực nghiệm, các tham số này nên được giữ vừa phải để VNS có thể thực hiện nhiều vòng shaking và cải thiện thay vì dành quá nhiều thời gian cho một lân cận duy nhất.
+
+\section{Nhận xét}
+\label{sec:vns-discussion}
+
+VNS phù hợp với MM-MT-dLARP vì bài toán có cấu trúc min--max rõ rệt. Thay vì cải thiện tổng chi phí một cách dàn trải, thuật toán tập trung vào điểm triển khai đang tạo ra giá trị lớn nhất của hàm mục tiêu. Các lân cận nhỏ giúp tinh chỉnh thứ tự phục vụ trong từng chuyến bay, trong khi các lân cận chuyển và trao đổi chuỗi cho phép cân bằng lại tải giữa các điểm triển khai.
+
+Cơ chế shaking giúp thuật toán không bị kẹt quá lâu tại một cực trị cục bộ. Tuy nhiên, shaking vẫn dựa trên destroy--repair nên nghiệm mới thường giữ được phần lớn cấu trúc tốt của nghiệm cũ. Nhờ sự kết hợp giữa tăng cường và đa dạng hoá, VNS là một lựa chọn tự nhiên cho các bài toán định tuyến drone nhiều chuyến, nơi không gian nghiệm lớn và các ràng buộc khả năng bay làm cho việc tối ưu chính xác trở nên khó khăn.
+

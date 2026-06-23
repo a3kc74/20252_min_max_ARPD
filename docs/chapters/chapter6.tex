@@ -1,0 +1,242 @@
+\chapter{Thực nghiệm và đánh giá kết quả}
+\label{chap:thuc-nghiem}
+
+\section{Mục tiêu thực nghiệm}
+\label{sec:experiment-objective}
+
+Các chương trước đã trình bày cách biểu diễn nghiệm và thiết kế ba hướng tìm kiếm cục bộ cho bài toán MM-MT-dLARP: VND, VNS và LNS. Chương này trình bày phần thực nghiệm nhằm so sánh ba giải thuật trên cùng một tập cấu hình đầu vào. Mục tiêu chính của thực nghiệm không phải là chứng minh tối ưu toàn cục, mà là đánh giá tương đối chất lượng nghiệm và thời gian chạy của từng giải thuật trong cùng điều kiện cài đặt.
+
+Ba giải thuật được so sánh gồm:
+\begin{itemize}
+    \item \textbf{VND}: thuật toán descent dùng một danh sách lân cận cố định và dừng khi không còn lân cận nào cải thiện nghiệm;
+    \item \textbf{VNS}: thuật toán mở rộng VND bằng cơ chế shaking để thoát khỏi cực trị cục bộ;
+    \item \textbf{LNS}: thuật toán phá--sửa nghiệm trên lân cận lớn, sau đó cải thiện lại bằng tìm kiếm cục bộ.
+\end{itemize}
+
+Tiêu chí đánh giá chính là giá trị hàm mục tiêu min--max, tương ứng với makespan lớn nhất giữa các xe tải--drone. Giá trị này càng nhỏ thì nghiệm càng tốt. Ngoài ra, thời gian chạy cũng được ghi nhận để đánh giá chi phí tính toán của từng giải thuật.
+
+\section{Thiết lập thực nghiệm}
+\label{sec:experiment-setup}
+
+Các thể hiện dùng trong thực nghiệm được lấy từ bộ dữ liệu của bài báo \textit{The Min--Max Multi--Trip Drone Location Arc Routing Problem} \cite{corberan2025mmdlarp}. Đây là các thể hiện rời rạc của bài toán MM-MT-LARP, được lưu trong thư mục \texttt{data/instances}. Toàn bộ thư mục dữ liệu hiện có 136 file \texttt{.dat}, được chia theo các họ \texttt{MTLARP4}, \texttt{MTLARP5}, \texttt{MTLARP6}, \texttt{MTLARP7}, \texttt{MTLARP8}, \texttt{MTLARP9} và \texttt{MTLARP10}. Tên file có dạng \texttt{MTLARP\(q\)\_\(n\)\_\(p\)\_\(r\).dat}, trong đó tiền tố \texttt{MTLARP\(q\)} biểu diễn nhóm thể hiện, các chỉ số tiếp theo mô tả kích thước hoặc cấu hình sinh dữ liệu, còn chỉ số cuối là số thứ tự lặp của thể hiện trong cùng nhóm.
+
+Trong khuôn khổ đồ án, thực nghiệm tập trung trên hai nhóm thể hiện nhỏ và trung bình là \texttt{MTLARP4} và \texttt{MTLARP5}. Việc chọn hai nhóm này nhằm bảo đảm cả ba thuật toán VND, VNS và LNS đều có thể chạy trên cùng một tập cấu hình trong thời gian hợp lý, đồng thời vẫn thể hiện được sự khác biệt về chất lượng nghiệm khi kích thước bài toán tăng. Với mỗi thể hiện, tham số \(P\) biểu diễn số xe tải--drone được sử dụng, còn \(L\) là giới hạn chi phí tối đa của mỗi chuyến bay drone. Giá trị \(P\) và \(L\) được chọn theo cấu hình thực nghiệm tương ứng với bộ test gốc của bài báo, sau đó được dùng thống nhất cho cả ba thuật toán.
+
+Mỗi cấu hình \((\text{Thể hiện},P,L)\) được chạy lần lượt với ba giải thuật VNS, LNS và VND. Các lượt chạy sử dụng cùng seed ngẫu nhiên bằng \(0\), cùng kiểu mục tiêu \texttt{minmax\_ghg}, cùng bộ tối ưu chuyến bay \texttt{bc}, và cùng chế độ tắt log chi tiết để giảm ảnh hưởng của xuất nhập chuẩn đến thời gian chạy. Kết quả đầu ra được lưu trong hai thư mục:
+\begin{itemize}
+    \item \texttt{exp/results/vns\_lns\_vnd\_configs/results.xlsx};
+    \item \texttt{exp/results/vns\_lns\_vnd\_configs\_mtl5/results.xlsx}.
+\end{itemize}
+
+Mỗi file kết quả cũng có bản \texttt{csv} tương ứng để thuận tiện cho việc tổng hợp số liệu. Các cột quan trọng trong file kết quả gồm tên giải thuật, tên thể hiện, số xe tải \(P\), giới hạn bay \(L\), số xe tải được dùng, giá trị mục tiêu, makespan theo cách tính của bài báo, makespan theo mục tiêu phát thải, tổng chi phí phát thải, thời gian chạy và trạng thái thực thi. Trong toàn bộ thực nghiệm, các lượt chạy đều có trạng thái \texttt{ok}, tức là không có lượt chạy bị lỗi.
+
+\section{Tập cấu hình thực nghiệm}
+\label{sec:experiment-instances}
+
+Bảng~\ref{tab:mtlarp4-configs} liệt kê các cấu hình thuộc nhóm \texttt{MTLARP4}. Nhóm này gồm 20 cấu hình, tương ứng với 60 lượt chạy khi xét ba giải thuật.
+
+\begin{longtable}{p{5.4cm}C{1.2cm}C{1.8cm}}
+\caption{Các cấu hình thực nghiệm nhóm \texttt{MTLARP4}}
+\label{tab:mtlarp4-configs}\\
+\toprule
+\textbf{Thể hiện} & \textbf{\(P\)} & \textbf{\(L\)} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Thể hiện} & \textbf{\(P\)} & \textbf{\(L\)} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+\texttt{MTLARP4\_4\_3\_1.dat} & 2 & 847 \\
+\texttt{MTLARP4\_4\_3\_2.dat} & 2 & 1033 \\
+\texttt{MTLARP4\_4\_4\_1.dat} & 2 & 746 \\
+\texttt{MTLARP4\_4\_4\_1.dat} & 3 & 746 \\
+\texttt{MTLARP4\_4\_4\_2.dat} & 2 & 847 \\
+\texttt{MTLARP4\_4\_4\_2.dat} & 3 & 847 \\
+\texttt{MTLARP4\_4\_5\_1.dat} & 2 & 785 \\
+\texttt{MTLARP4\_4\_5\_1.dat} & 3 & 785 \\
+\texttt{MTLARP4\_4\_5\_1.dat} & 4 & 785 \\
+\texttt{MTLARP4\_4\_5\_2.dat} & 2 & 900 \\
+\texttt{MTLARP4\_4\_5\_2.dat} & 3 & 900 \\
+\texttt{MTLARP4\_4\_5\_2.dat} & 4 & 900 \\
+\texttt{MTLARP4\_4\_6\_1.dat} & 2 & 694 \\
+\texttt{MTLARP4\_4\_6\_1.dat} & 3 & 694 \\
+\texttt{MTLARP4\_4\_6\_1.dat} & 4 & 694 \\
+\texttt{MTLARP4\_4\_6\_1.dat} & 5 & 694 \\
+\texttt{MTLARP4\_4\_6\_2.dat} & 2 & 903 \\
+\texttt{MTLARP4\_4\_6\_2.dat} & 3 & 903 \\
+\texttt{MTLARP4\_4\_6\_2.dat} & 4 & 903 \\
+\texttt{MTLARP4\_4\_6\_2.dat} & 5 & 903 \\
+\end{longtable}
+
+Bảng~\ref{tab:mtlarp5-configs} liệt kê các cấu hình thuộc nhóm \texttt{MTLARP5}. Nhóm này cũng gồm 20 cấu hình, tương ứng với 60 lượt chạy.
+
+\begin{longtable}{p{5.4cm}C{1.2cm}C{1.8cm}}
+\caption{Các cấu hình thực nghiệm nhóm \texttt{MTLARP5}}
+\label{tab:mtlarp5-configs}\\
+\toprule
+\textbf{Thể hiện} & \textbf{\(P\)} & \textbf{\(L\)} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Thể hiện} & \textbf{\(P\)} & \textbf{\(L\)} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+\texttt{MTLARP5\_5\_3\_1.dat} & 2 & 1469 \\
+\texttt{MTLARP5\_5\_3\_2.dat} & 2 & 1368 \\
+\texttt{MTLARP5\_5\_4\_1.dat} & 2 & 1159 \\
+\texttt{MTLARP5\_5\_4\_1.dat} & 3 & 1159 \\
+\texttt{MTLARP5\_5\_4\_2.dat} & 2 & 1010 \\
+\texttt{MTLARP5\_5\_4\_2.dat} & 3 & 1010 \\
+\texttt{MTLARP5\_5\_5\_1.dat} & 2 & 955 \\
+\texttt{MTLARP5\_5\_5\_1.dat} & 3 & 955 \\
+\texttt{MTLARP5\_5\_5\_1.dat} & 4 & 955 \\
+\texttt{MTLARP5\_5\_5\_2.dat} & 2 & 988 \\
+\texttt{MTLARP5\_5\_5\_2.dat} & 3 & 988 \\
+\texttt{MTLARP5\_5\_5\_2.dat} & 4 & 988 \\
+\texttt{MTLARP5\_5\_6\_1.dat} & 2 & 783 \\
+\texttt{MTLARP5\_5\_6\_1.dat} & 3 & 783 \\
+\texttt{MTLARP5\_5\_6\_1.dat} & 4 & 783 \\
+\texttt{MTLARP5\_5\_6\_1.dat} & 5 & 783 \\
+\texttt{MTLARP5\_5\_6\_2.dat} & 2 & 1168 \\
+\texttt{MTLARP5\_5\_6\_2.dat} & 3 & 1168 \\
+\texttt{MTLARP5\_5\_6\_2.dat} & 4 & 1168 \\
+\texttt{MTLARP5\_5\_6\_2.dat} & 5 & 1168 \\
+\end{longtable}
+
+Tổng cộng hai nhóm dữ liệu có 40 cấu hình và 120 lượt chạy. Việc sử dụng cùng một tập cấu hình cho cả ba giải thuật giúp kết quả so sánh phản ánh trực tiếp sự khác biệt giữa các cơ chế tìm kiếm.
+
+\section{Cấu hình tham số của các thuật toán}
+\label{sec:experiment-parameters}
+
+Bảng~\ref{tab:algorithm-params} trình bày các tham số chính được sử dụng trong các lượt chạy thực nghiệm. Các tham số này được giữ cố định trên toàn bộ 40 cấu hình để bảo đảm kết quả so sánh không bị ảnh hưởng bởi việc tinh chỉnh riêng cho từng thể hiện.
+
+\begin{table}[H]
+\centering
+\caption{Cấu hình tham số của các thuật toán trong thực nghiệm}
+\label{tab:algorithm-params}
+\begin{tabular}{p{3.0cm}p{4.2cm}p{6.0cm}}
+\toprule
+\textbf{Thành phần} & \textbf{Tham số} & \textbf{Giá trị sử dụng} \\
+\midrule
+Cấu hình chung & Seed & \(0\) \\
+Cấu hình chung & Kiểu mục tiêu & \texttt{minmax\_ghg} \\
+Cấu hình chung & Bộ tối ưu chuyến bay & \texttt{bc} \\
+Cấu hình chung & Số nghiệm xây dựng tối đa & \(20\) \\
+Cấu hình chung & Số nghiệm xét ở pha splitting & \(10\) \\
+Cấu hình chung & Ngưỡng tối ưu exact cho chuyến bay & \(12\) cạnh yêu cầu \\
+VND & Danh sách lân cận & \texttt{intraroute\_move}, \texttt{destroy\_and\_repair}, \texttt{zero\_to\_l\_exchange}, \texttt{l1\_to\_l2\_exchange} \\
+VND & \texttt{nmax\_destroy} & \(5\) \\
+VND & \texttt{itmax\_destroy} & \(30\) \\
+VND & \texttt{lmax\_exchange} & \(3\) \\
+VNS & \texttt{k\_max} & \(4\) \\
+VNS & \texttt{max\_iter} & \(100\) \\
+VNS & Tìm kiếm cục bộ trong vòng lặp & \texttt{intraroute\_move}, \texttt{zero\_to\_l\_exchange} \\
+LNS & \texttt{destroy\_frac} & \(0.3\) \\
+LNS & \texttt{max\_iter} & \(500\) \\
+LNS & Quy tắc chấp nhận & Chỉ chấp nhận nghiệm cải thiện \\
+LNS & Tìm kiếm cục bộ sau repair & \texttt{intraroute\_move} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Với VND, các tham số \texttt{nmax\_destroy}, \texttt{itmax\_destroy} và \texttt{lmax\_exchange} lần lượt điều khiển kích thước phá--sửa, số lần thử trong toán tử phá--sửa và độ dài tối đa của chuỗi cạnh được xét trong các phép trao đổi. Với VNS, tham số \texttt{k\_max}=4 giới hạn mức shaking lớn nhất trước khi quay lại lân cận đầu tiên, còn \texttt{max\_iter}=100 là số vòng lặp ngoài. Với LNS, \texttt{destroy\_frac}=0.3 nghĩa là mỗi bước destroy loại bỏ khoảng \(30\%\) số nhiệm vụ hiện có rồi chèn lại bằng chiến lược best insertion; thuật toán chạy tối đa \(500\) vòng lặp ngoài cho mỗi nghiệm xuất phát được chọn.
+
+Các cấu hình trên phản ánh chủ đích thực nghiệm của đồ án: VND đóng vai trò baseline tìm kiếm cục bộ thuần túy; VNS bổ sung cơ chế shaking nhưng vẫn giữ chi phí tính toán ở mức vừa phải; còn LNS sử dụng lân cận lớn hơn, thời gian chạy dài hơn và được kỳ vọng cải thiện tốt hơn các nghiệm bị nghẽn bởi phân công ban đầu.
+
+\section{Cách tổng hợp kết quả}
+\label{sec:experiment-metrics}
+
+Với mỗi cấu hình, gọi \(z_a\) là giá trị mục tiêu thu được bởi giải thuật \(a \in \{\text{VNS},\text{LNS},\text{VND}\}\). Giá trị tốt nhất trong ba giải thuật trên cùng cấu hình được tính bởi
+\begin{equation}
+z_{\min} = \min_a z_a.
+\end{equation}
+
+Độ lệch tương đối của giải thuật \(a\) so với nghiệm tốt nhất trong cùng cấu hình được tính theo công thức
+\begin{equation}
+\operatorname{gap}_a =
+\frac{z_a - z_{\min}}{z_{\min}} \times 100\%.
+\end{equation}
+
+Nếu một giải thuật đạt đúng giá trị \(z_{\min}\) trên một cấu hình, giải thuật đó được tính là thắng trên cấu hình đó. Trong trường hợp nhiều giải thuật đạt cùng giá trị tốt nhất, tất cả các giải thuật đó đều được tính thắng. Vì vậy, tổng số lượt thắng có thể lớn hơn số cấu hình.
+
+\section{Kết quả tổng hợp}
+\label{sec:experiment-summary}
+
+Bảng~\ref{tab:summary-mtlarp4} trình bày kết quả tổng hợp trên nhóm \texttt{MTLARP4}. Có thể thấy LNS đạt số lượt thắng cao nhất với 17 trên 20 cấu hình. VND đạt nghiệm tốt nhất trên 12 cấu hình, trong khi VNS chỉ thắng trên 1 cấu hình. Xét theo độ lệch trung bình, LNS có gap trung bình thấp nhất, chỉ 0.240\%, tiếp theo là VND với 1.304\%, còn VNS có gap trung bình 8.122\%.
+
+\begin{table}[H]
+\centering
+\caption{Kết quả tổng hợp trên nhóm \texttt{MTLARP4}}
+\label{tab:summary-mtlarp4}
+\begin{tabular}{lrrrr}
+\toprule
+\textbf{Giải thuật} & \textbf{Số thắng} & \textbf{Mục tiêu TB} & \textbf{Gap TB (\%)} & \textbf{Thời gian TB (s)} \\
+\midrule
+VNS & 1  & 1530.355 & 8.122 & 52.884 \\
+LNS & 17 & 1419.480 & 0.240 & 23.884 \\
+VND & 12 & 1431.224 & 1.304 & 12.841 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Bảng~\ref{tab:summary-mtlarp5} trình bày kết quả tổng hợp trên nhóm \texttt{MTLARP5}. Nhóm này khó hơn nhóm \texttt{MTLARP4}, thể hiện qua giá trị mục tiêu và thời gian chạy trung bình cao hơn. Tuy nhiên, xu hướng so sánh giữa các giải thuật vẫn tương tự: LNS có chất lượng nghiệm tốt nhất với 18 lượt thắng và gap trung bình 0.245\%; VND đứng thứ hai với 9 lượt thắng và gap trung bình 1.476\%; VNS có chất lượng thấp hơn rõ rệt với gap trung bình 11.262\%.
+
+\begin{table}[H]
+\centering
+\caption{Kết quả tổng hợp trên nhóm \texttt{MTLARP5}}
+\label{tab:summary-mtlarp5}
+\begin{tabular}{lrrrr}
+\toprule
+\textbf{Giải thuật} & \textbf{Số thắng} & \textbf{Mục tiêu TB} & \textbf{Gap TB (\%)} & \textbf{Thời gian TB (s)} \\
+\midrule
+VNS & 1  & 2684.538 & 11.262 & 212.516 \\
+LNS & 18 & 2444.463 & 0.245  & 132.119 \\
+VND & 9  & 2474.274 & 1.476  & 79.736 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Bảng~\ref{tab:summary-all} tổng hợp kết quả trên toàn bộ 40 cấu hình. LNS tiếp tục là giải thuật có chất lượng nghiệm tốt nhất với 35 lượt thắng và gap trung bình 0.243\%. VND đạt 21 lượt thắng và gap trung bình 1.390\%. VNS chỉ đạt 2 lượt thắng và gap trung bình 9.692\%.
+
+\begin{table}[H]
+\centering
+\caption{Kết quả tổng hợp trên toàn bộ thực nghiệm}
+\label{tab:summary-all}
+\begin{tabular}{lrrrr}
+\toprule
+\textbf{Giải thuật} & \textbf{Số thắng} & \textbf{Mục tiêu TB} & \textbf{Gap TB (\%)} & \textbf{Thời gian TB (s)} \\
+\midrule
+VNS & 2  & 2107.446 & 9.692 & 132.700 \\
+LNS & 35 & 1931.971 & 0.243 & 78.002 \\
+VND & 21 & 1952.749 & 1.390 & 46.289 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Phân tích kết quả}
+\label{sec:experiment-analysis}
+
+Kết quả thực nghiệm cho thấy LNS là giải thuật ổn định nhất trong ba phương pháp được so sánh. Trên cả hai nhóm thể hiện, LNS có gap trung bình rất nhỏ so với nghiệm tốt nhất tìm được trong từng cấu hình. Điều này phù hợp với đặc trưng của bài toán MM-MT-dLARP: một nghiệm tốt thường cần tái phân bổ đồng thời nhiều cạnh giữa các điểm triển khai và các chuyến bay. Các lân cận nhỏ có thể cải thiện thứ tự phục vụ trong từng chuyến bay, nhưng khó thay đổi mạnh cấu trúc phân công. Cơ chế destroy--repair của LNS khắc phục điểm này bằng cách tạm thời loại bỏ một phần nhiệm vụ rồi chèn lại vào các vị trí tốt hơn.
+
+VND có thời gian chạy thấp nhất trong cả hai nhóm dữ liệu. Trên toàn bộ thực nghiệm, thời gian trung bình của VND là 46.289 giây, thấp hơn LNS và VNS. Chất lượng nghiệm của VND cũng khá tốt, với gap trung bình 1.390\%. Điều này cho thấy các toán tử tìm kiếm cục bộ được thiết kế trong Chương~\ref{chap:bieu-dien-nghiem} có hiệu quả ngay cả khi không có cơ chế nhiễu mạnh. Tuy nhiên, do VND là phương pháp descent thuần túy, thuật toán dễ dừng tại cực trị cục bộ. Vì vậy, VND phù hợp khi cần nghiệm tốt trong thời gian ngắn, nhưng chưa phải lựa chọn tốt nhất nếu ưu tiên chất lượng nghiệm cuối cùng.
+
+VNS có kết quả kém hơn kỳ vọng trong bộ thực nghiệm này. Mặc dù VNS được thiết kế để thoát khỏi cực trị cục bộ bằng shaking, số lượt thắng và gap trung bình đều thấp hơn LNS và VND. Một nguyên nhân có thể là cơ chế shaking hiện tại chưa tạo được sự tái cấu trúc đủ hiệu quả so với destroy--repair của LNS. Nếu shaking chỉ tạo nhiễu quanh nghiệm hiện tại nhưng sau đó VND nhẹ đưa nghiệm quay về một vùng lân cận tương tự, thuật toán sẽ tốn nhiều thời gian mà không cải thiện đáng kể chất lượng nghiệm. Ngoài ra, thời gian chạy trung bình của VNS cao hơn VND nhưng chất lượng nghiệm lại thấp hơn, cho thấy cần tinh chỉnh thêm tham số và chiến lược chấp nhận của VNS.
+
+Khi so sánh hai nhóm thể hiện, nhóm \texttt{MTLARP5} có thời gian chạy lớn hơn đáng kể so với nhóm \texttt{MTLARP4}. Điều này phù hợp với phân tích độ khó ở Chương~\ref{chap:bai-toan}: khi kích thước đồ thị và số cạnh yêu cầu tăng, số phương án chèn, dịch chuyển và hoán đổi cũng tăng nhanh. Trên nhóm \texttt{MTLARP5}, thời gian trung bình của LNS là 132.119 giây, trong khi trên nhóm \texttt{MTLARP4} là 23.884 giây. Tuy vậy, gap trung bình của LNS gần như không đổi giữa hai nhóm, lần lượt là 0.240\% và 0.245\%. Đây là dấu hiệu cho thấy LNS giữ được chất lượng nghiệm ổn định khi kích thước thể hiện tăng trong phạm vi thực nghiệm.
+
+Một điểm cần lưu ý là số lượt thắng của VND và LNS có thể cộng lại lớn hơn số cấu hình do có các trường hợp hòa. Điều này cho thấy trong nhiều cấu hình, VND đã tìm được nghiệm tốt ngang với LNS nhưng với thời gian thấp hơn. Tuy nhiên, LNS thắng trên nhiều cấu hình hơn và có gap trung bình nhỏ hơn, nên nếu xét chất lượng nghiệm tổng thể thì LNS vẫn là phương pháp tốt nhất trong thực nghiệm này.
+
+\section{Nhận xét chung}
+\label{sec:experiment-discussion}
+
+Từ các kết quả trên, có thể rút ra ba nhận xét chính. Thứ nhất, LNS là giải thuật cho chất lượng nghiệm tốt nhất và ổn định nhất trên cả hai nhóm dữ liệu. Cơ chế lân cận lớn phù hợp với bản chất phân công và cân bằng tải của MM-MT-dLARP.
+
+Thứ hai, VND là phương pháp có thời gian chạy thấp nhất và vẫn đạt chất lượng nghiệm khá tốt. Điều này cho thấy việc thiết kế đúng các lân cận tập trung vào điểm triển khai nghẽn có vai trò quan trọng. VND có thể được dùng như một thuật toán độc lập khi giới hạn thời gian chặt, hoặc như thủ tục tăng cường bên trong LNS và VNS.
+
+Thứ ba, phiên bản VNS hiện tại chưa khai thác tốt ưu thế của cơ chế thay đổi lân cận. Kết quả này không phủ nhận tính phù hợp của VNS đối với bài toán, nhưng cho thấy cần cải tiến thêm cơ chế shaking, thứ tự lân cận, tham số \(k_{\max}\), cũng như quy tắc chấp nhận nghiệm. Các hướng này sẽ được đề cập lại trong Chương~\ref{chap:ket-luan}.
+
+Như vậy, trong phạm vi thực nghiệm của đồ án, LNS là lựa chọn tốt nhất khi ưu tiên chất lượng nghiệm; VND là lựa chọn phù hợp khi ưu tiên thời gian chạy; còn VNS cần được tinh chỉnh thêm để phát huy hiệu quả trên bài toán MM-MT-dLARP.

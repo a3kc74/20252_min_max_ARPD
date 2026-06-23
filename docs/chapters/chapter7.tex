@@ -1,0 +1,116 @@
+\chapter{Kết luận và hướng phát triển}
+\label{chap:ket-luan}
+
+\section{Kết luận chung}
+\label{sec:conclusion-summary}
+
+Đồ án đã nghiên cứu bài toán \textit{Min--Max Multi--Trip Drone Location Arc Routing Problem} (MM-MT-dLARP), một biến thể của bài toán định tuyến trên cạnh có xét đồng thời lựa chọn điểm triển khai drone, phân công các cạnh yêu cầu, chia nhiệm vụ thành nhiều chuyến bay và cân bằng tải theo mục tiêu min--max. Đây là một bài toán khó vì kết hợp nhiều tầng quyết định: chọn vị trí, định tuyến trên cạnh, giới hạn thời lượng bay và cân bằng thời gian hoàn thành giữa các xe tải--drone.
+
+Về mặt mô hình, đồ án đã trình bày lại bối cảnh của bài toán, các thành phần chính của MM-MT-dLARP và phiên bản rời rạc MM-MT-LARP. Việc rời rạc hóa giúp chuyển bài toán từ miền liên tục sang một bài toán tối ưu tổ hợp trên đồ thị, trong đó các đoạn tuyến cần phục vụ trở thành các cạnh yêu cầu, còn các đoạn bay không phục vụ được biểu diễn bởi các cạnh bay chết. Trên cơ sở đó, nghiệm được biểu diễn bằng tập điểm triển khai được chọn và danh sách các chuyến bay tại từng điểm triển khai.
+
+Về mặt thuật toán, đồ án tập trung vào ba hướng tìm kiếm cục bộ và metaheuristic: VND, VNS và LNS. VND đóng vai trò là thủ tục cải thiện cơ bản, sử dụng nhiều lân cận như tối ưu trong chuyến bay, phá--sửa, dịch chuyển chuỗi và trao đổi chuỗi. VNS mở rộng VND bằng cơ chế shaking nhằm thoát khỏi cực trị cục bộ. LNS sử dụng lân cận lớn thông qua cơ chế destroy--repair, cho phép tái cấu trúc một phần đáng kể của nghiệm trước khi cải thiện lại bằng tìm kiếm cục bộ.
+
+Phần thực nghiệm đã so sánh ba giải thuật trên hai nhóm dữ liệu \texttt{MTLARP4} và \texttt{MTLARP5}, với tổng cộng 40 cấu hình và 120 lượt chạy. Kết quả cho thấy LNS là phương pháp có chất lượng nghiệm tốt nhất trong phạm vi thực nghiệm: LNS đạt 35 lượt thắng trên 40 cấu hình và gap trung bình 0.243\% so với nghiệm tốt nhất tìm được trong từng cấu hình. VND có thời gian chạy thấp nhất và vẫn đạt chất lượng nghiệm khá tốt, với gap trung bình 1.390\%. VNS trong phiên bản hiện tại cho kết quả kém hơn hai phương pháp còn lại, với gap trung bình 9.692\%, cho thấy cơ chế shaking và chiến lược điều khiển lân cận cần được cải tiến thêm.
+
+Từ các kết quả trên, có thể kết luận rằng cách tiếp cận tìm kiếm cục bộ là phù hợp với MM-MT-dLARP. Đặc biệt, các toán tử tập trung vào điểm triển khai nghẽn và cơ chế tái phân bổ tải giữa các điểm triển khai có vai trò quan trọng đối với mục tiêu min--max. Trong các phương pháp đã cài đặt, LNS là lựa chọn tốt nhất khi ưu tiên chất lượng nghiệm, còn VND là lựa chọn hợp lý khi cần nghiệm tốt trong thời gian ngắn.
+
+\section{Các kết quả đạt được}
+\label{sec:conclusion-contributions}
+
+Các kết quả chính của đồ án có thể tóm tắt như sau.
+
+\begin{itemize}
+    \item Đồ án đã hệ thống hóa bài toán MM-MT-dLARP, bao gồm bối cảnh ứng dụng, mô hình rời rạc, hàm mục tiêu min--max và các ràng buộc quan trọng như phục vụ toàn bộ cạnh yêu cầu, giới hạn thời lượng bay và giới hạn số điểm triển khai.
+
+    \item Đồ án đã xây dựng cách biểu diễn nghiệm phù hợp cho các giải thuật tìm kiếm cục bộ. Nghiệm được mô tả bởi tập điểm triển khai và các chuyến bay gắn với từng điểm triển khai, trong đó mỗi chuyến bay là một chuỗi có thứ tự các cạnh yêu cầu có hướng.
+
+    \item Đồ án đã trình bày các toán tử cải thiện nghiệm, bao gồm tối ưu trong một chuyến bay, destroy--repair, dịch chuyển chuỗi \(0\)--\(\ell\), trao đổi chuỗi \(\ell_1\)--\(\ell_2\), và tối ưu cục bộ tại điểm triển khai nghẽn. Các toán tử này được thiết kế để bảo toàn tính khả thi và ưu tiên giảm tải tại thành phần đang quyết định giá trị mục tiêu.
+
+    \item Đồ án đã xây dựng và so sánh ba khung giải thuật VND, VNS và LNS. Ba giải thuật sử dụng cùng cách biểu diễn nghiệm và cùng nhóm toán tử cơ bản, nhưng khác nhau ở mức độ đa dạng hóa vùng tìm kiếm.
+
+    \item Đồ án đã thực hiện thực nghiệm trên hai nhóm dữ liệu với 40 cấu hình, xuất kết quả ra file Excel và tổng hợp các chỉ số so sánh gồm giá trị mục tiêu trung bình, gap trung bình, số lượt thắng và thời gian chạy trung bình.
+
+    \item Kết quả thực nghiệm chỉ ra rằng LNS có hiệu quả tốt nhất về chất lượng nghiệm, VND có ưu thế về thời gian chạy, còn VNS cần được điều chỉnh thêm để đạt hiệu quả ổn định hơn.
+\end{itemize}
+
+\section{Hạn chế}
+\label{sec:conclusion-limitations}
+
+Mặc dù đồ án đã đạt được các kết quả thực nghiệm ban đầu, vẫn còn một số hạn chế cần lưu ý.
+
+Thứ nhất, các thực nghiệm mới tập trung vào hai nhóm thể hiện \texttt{MTLARP4} và \texttt{MTLARP5}. Số lượng cấu hình đủ để quan sát xu hướng so sánh giữa các giải thuật, nhưng chưa đủ rộng để khẳng định hiệu quả trên mọi kích thước và mọi đặc điểm hình học của bài toán. Các thể hiện lớn hơn hoặc có cấu trúc phân bố cạnh yêu cầu khác có thể làm thay đổi tương quan giữa các giải thuật.
+
+Thứ hai, mỗi cấu hình trong thực nghiệm hiện được chạy với một seed cố định. Do các giải thuật có yếu tố ngẫu nhiên trong khởi tạo, shaking hoặc destroy, kết quả có thể thay đổi khi dùng seed khác. Vì vậy, để đánh giá chắc chắn hơn, cần chạy nhiều lần độc lập cho mỗi cấu hình và báo cáo thêm các chỉ số thống kê như trung bình, độ lệch chuẩn, nghiệm tốt nhất và nghiệm xấu nhất.
+
+Thứ ba, phiên bản VNS hiện tại chưa đạt hiệu quả tốt. Điều này có thể đến từ cách thiết kế shaking, thứ tự lân cận, số vòng lặp hoặc quy tắc chấp nhận nghiệm. Trong cài đặt hiện tại, VNS có thể tiêu tốn nhiều thời gian cho các bước nhiễu và cải thiện nhưng không tạo ra thay đổi đủ mạnh trong cấu trúc phân công nhiệm vụ.
+
+Thứ tư, phần tinh chỉnh tham số còn hạn chế. Các tham số như tỷ lệ phá \(\rho\) của LNS, mức shaking \(k_{\max}\) của VNS, độ dài chuỗi \(\ell_{\max}\), số nghiệm khởi tạo và giới hạn thời gian đều ảnh hưởng trực tiếp đến chất lượng nghiệm. Việc chọn tham số chưa được khảo sát một cách hệ thống trên nhiều tổ hợp.
+
+Thứ năm, đồ án mới tập trung vào phiên bản heuristic của bài toán, chưa so sánh trực tiếp với nghiệm tối ưu hoặc cận dưới từ mô hình exact. Vì vậy, gap được sử dụng trong thực nghiệm là gap so với nghiệm tốt nhất trong ba giải thuật, không phải gap tối ưu tuyệt đối.
+
+\section{Hướng phát triển}
+\label{sec:conclusion-future-work}
+
+Từ các hạn chế trên, có thể phát triển đồ án theo một số hướng sau.
+
+\subsection{Cải tiến VNS}
+\label{subsec:future-vns}
+
+Kết quả thực nghiệm cho thấy VNS là hướng cần được cải tiến nhiều nhất. Một hướng trực tiếp là thiết kế lại cơ chế shaking để tạo thay đổi có định hướng hơn. Thay vì áp dụng destroy--repair lặp lại một cách tương đối đơn giản, shaking có thể ưu tiên các cạnh thuộc điểm triển khai nghẽn, các cạnh có chi phí chèn cao, hoặc các cạnh nằm xa cụm hiện tại của điểm triển khai.
+
+Ngoài ra, có thể sử dụng quy tắc chấp nhận linh hoạt hơn. Phiên bản hiện tại chủ yếu chấp nhận cải thiện nghiêm ngặt. Trong một số trường hợp, cho phép chấp nhận nghiệm không tốt hơn trong ngắn hạn, chẳng hạn theo simulated annealing hoặc threshold accepting, có thể giúp thuật toán rời khỏi các vùng cực trị cục bộ sâu hơn.
+
+Một hướng khác là dùng nhiều loại shaking thay vì một loại duy nhất. Ví dụ, shaking ở mức nhỏ có thể là dịch chuyển một số cạnh khỏi điểm nghẽn, shaking ở mức trung bình có thể là hoán đổi cụm cạnh giữa hai điểm triển khai, còn shaking ở mức lớn có thể là tái chọn một phần điểm triển khai. Cách này phù hợp hơn với tinh thần thay đổi lân cận của VNS.
+
+\subsection{Phát triển LNS thích nghi}
+\label{subsec:future-alns}
+
+LNS cho kết quả tốt nhất trong thực nghiệm, vì vậy một hướng phát triển tự nhiên là mở rộng thành Adaptive Large Neighborhood Search (ALNS). Trong ALNS, nhiều toán tử destroy và repair được sử dụng song song, và trọng số chọn toán tử được cập nhật dựa trên hiệu quả trong quá trình chạy.
+
+Các toán tử destroy có thể bao gồm:
+\begin{itemize}
+    \item phá ngẫu nhiên để tạo đa dạng;
+    \item phá tại điểm triển khai nghẽn để giảm trực tiếp makespan;
+    \item phá các cạnh có chi phí chèn lớn;
+    \item phá các cạnh gần nhau về mặt hình học để tái cấu trúc một vùng cục bộ;
+    \item phá theo chuyến bay, tức loại bỏ toàn bộ một số chuyến bay kém hiệu quả.
+\end{itemize}
+
+Các toán tử repair có thể bao gồm chèn tốt nhất theo mục tiêu min--max, chèn gần nhất theo hình học, chèn có hối tiếc và chèn ưu tiên cân bằng tải. Việc kết hợp nhiều toán tử có thể giúp LNS ổn định hơn trên các thể hiện có cấu trúc khác nhau.
+
+\subsection{Chạy thực nghiệm thống kê rộng hơn}
+\label{subsec:future-experiments}
+
+Một hướng cần thiết là mở rộng thực nghiệm theo hướng thống kê. Mỗi cấu hình nên được chạy với nhiều seed khác nhau. Khi đó, kết quả có thể được báo cáo bằng trung bình, độ lệch chuẩn, khoảng tin cậy và số lần đạt nghiệm tốt nhất. Điều này giúp đánh giá độ ổn định của từng giải thuật, đặc biệt với các phương pháp có thành phần ngẫu nhiên như VNS và LNS.
+
+Ngoài hai nhóm \texttt{MTLARP4} và \texttt{MTLARP5}, có thể bổ sung thêm các nhóm thể hiện lớn hơn hoặc các thể hiện có cấu trúc khác nhau về số điểm triển khai, số cạnh yêu cầu, độ phân tán hình học và giới hạn bay \(L\). Khi đó, có thể phân tích rõ hơn giải thuật nào phù hợp với từng loại thể hiện.
+
+\subsection{Kết hợp với cận dưới và mô hình exact}
+\label{subsec:future-exact}
+
+Trong thực nghiệm hiện tại, chất lượng nghiệm được đánh giá tương đối giữa ba giải thuật. Để đánh giá chính xác hơn, cần xây dựng hoặc khai thác các cận dưới cho bài toán. Các cận dưới có thể đến từ mô hình quy hoạch nguyên nới lỏng, từ bài toán phân công đơn giản hơn, hoặc từ các ràng buộc cân bằng tải.
+
+Với các thể hiện nhỏ, có thể chạy mô hình exact hoặc branch-and-cut để lấy nghiệm tối ưu hoặc cận tốt. Khi đó, các giải thuật heuristic có thể được đánh giá bằng optimality gap thay vì chỉ so sánh nội bộ. Điều này giúp kết luận về chất lượng nghiệm có cơ sở mạnh hơn.
+
+\subsection{Cải tiến pha rời rạc hóa và chia nhỏ cạnh}
+\label{subsec:future-discretization}
+
+Một đặc điểm quan trọng của MM-MT-dLARP là bài toán gốc có tính liên tục. Chất lượng nghiệm phụ thuộc vào cách rời rạc hóa các đường cần phục vụ. Nếu rời rạc hóa quá thô, nghiệm có thể bỏ lỡ các điểm vào--ra tốt trên đường. Nếu rời rạc hóa quá mịn, số đỉnh và số cạnh bay chết tăng nhanh, làm thời gian chạy lớn.
+
+Do đó, một hướng phát triển quan trọng là xây dựng pha chia nhỏ cạnh thích nghi hơn. Thay vì chia đều toàn bộ các cạnh, thuật toán có thể chỉ thêm điểm trung gian tại những cạnh xuất hiện trong nghiệm tốt, tại các vùng có chi phí bay chết lớn, hoặc tại các đoạn nằm gần nhiều điểm triển khai tiềm năng. Sau mỗi lần chia nhỏ, nghiệm cũ được ánh xạ sang đồ thị mới và tiếp tục cải thiện bằng LNS hoặc VND.
+
+\subsection{Tối ưu hiệu năng cài đặt}
+\label{subsec:future-implementation}
+
+Các toán tử chèn, dịch chuyển và hoán đổi thường phải xét nhiều vị trí trong nhiều chuyến bay. Khi kích thước thể hiện tăng, thời gian tính toán tăng nhanh. Vì vậy, cần tối ưu hiệu năng cài đặt bằng các kỹ thuật như lưu cache chi phí giữa các đỉnh, cập nhật delta cost thay vì tính lại toàn bộ nghiệm, giới hạn danh sách ứng viên chèn theo khoảng cách gần, và song song hóa các phép thử độc lập.
+
+Đặc biệt, trong LNS, bước repair là phần tốn thời gian nhất. Nếu có thể giảm số vị trí chèn cần xét mà vẫn giữ chất lượng nghiệm, thuật toán có thể xử lý các thể hiện lớn hơn hoặc chạy nhiều seed hơn trong cùng thời gian.
+
+\section{Kết luận cuối cùng}
+\label{sec:final-conclusion}
+
+MM-MT-dLARP là một bài toán có ý nghĩa thực tiễn trong các ứng dụng kiểm tra hạ tầng bằng drone, đồng thời có độ khó cao do kết hợp định tuyến trên cạnh, lựa chọn vị trí và cân bằng tải. Đồ án đã xây dựng được một khung biểu diễn nghiệm và các toán tử tìm kiếm cục bộ phù hợp với cấu trúc của bài toán.
+
+Kết quả thực nghiệm cho thấy LNS là hướng tiếp cận hiệu quả nhất trong phạm vi nghiên cứu, nhờ khả năng tái cấu trúc nghiệm trên lân cận lớn và cân bằng lại tải giữa các điểm triển khai. VND tuy đơn giản hơn nhưng cho thời gian chạy tốt và có thể đóng vai trò quan trọng như một thủ tục tăng cường. VNS cần được cải tiến thêm để cơ chế shaking tạo ra các thay đổi có ích hơn.
+
+Nhìn chung, các kết quả thu được xác nhận rằng nhóm phương pháp tìm kiếm cục bộ và metaheuristic là hướng tiếp cận phù hợp cho MM-MT-dLARP. Với các cải tiến về ALNS, thực nghiệm thống kê, cận dưới và rời rạc hóa thích nghi, hướng nghiên cứu này còn nhiều tiềm năng để phát triển thành một bộ giải hiệu quả hơn cho các bài toán định tuyến drone nhiều chuyến trong thực tế.

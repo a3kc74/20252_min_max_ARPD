@@ -1,0 +1,272 @@
+\chapter{Phát biểu bài toán MM-MT-dLARP}
+\label{chap:bai-toan}
+
+\section{Mô tả bài toán thực tế}
+
+Bài toán \textit{Min--Max Multi--Trip Drone Location Arc Routing Problem}, viết tắt là MM-MT-dLARP, được đề xuất trong nghiên cứu của Corberán, Plana và Sanchis \cite{corberan2025mmdlarp}. Đây là một biến thể của bài toán định tuyến trên cung, trong đó nhiệm vụ chính không phải là ghé thăm các điểm rời rạc, mà là phục vụ một tập các đường hoặc đoạn tuyến cần được bay qua bởi drone. Các đường này có thể đại diện cho đường dây điện, đường ống, tuyến đường giao thông, kênh mương hoặc các hạ tầng tuyến tính cần được kiểm tra, giám sát hoặc ghi hình.
+
+Trong thực tế, drone thường có lợi thế lớn so với phương tiện mặt đất vì có thể bay trực tiếp giữa hai vị trí bất kỳ, không bị giới hạn bởi mạng đường bộ. Khi kiểm tra một tuyến hạ tầng, drone chỉ cần bay dọc theo tuyến đó để thu thập dữ liệu, chẳng hạn hình ảnh hoặc video. Tuy nhiên, drone có giới hạn về pin, do đó không thể tự thực hiện toàn bộ nhiệm vụ nếu mạng cần kiểm tra có quy mô lớn. Vì vậy, bài toán xem xét thêm sự hỗ trợ của xe tải. Mỗi xe tải mang theo một drone, xuất phát từ depot, di chuyển đến một điểm triển khai, sau đó drone được phóng từ điểm này để thực hiện một hoặc nhiều chuyến bay phục vụ các đường yêu cầu.
+
+Điểm quan trọng của bài toán là phải đồng thời quyết định:
+\begin{itemize}
+\item chọn các điểm triển khai nào cho các xe tải;
+\item phân công các đường hoặc đoạn đường cần phục vụ cho từng drone;
+\item chia nhiệm vụ của mỗi drone thành nhiều chuyến bay khả thi;
+\item xác định thứ tự và hướng phục vụ các cạnh trong từng chuyến bay;
+\item tối thiểu hóa thời gian hoàn thành lớn nhất trong toàn hệ thống.
+\end{itemize}
+
+Do đó, MM-MT-dLARP kết hợp ba thành phần khó của tối ưu tổ hợp: bài toán chọn vị trí triển khai, bài toán định tuyến trên cạnh và bài toán cân bằng tải theo mục tiêu min--max. Trong phạm vi đồ án này, bài toán được sử dụng làm nền tảng để xây dựng và đánh giá các giải thuật tìm kiếm cục bộ, đặc biệt là VNS và LNS.
+
+\section{Các thành phần của bài toán}
+
+\subsection{Depot, xe tải và drone}
+
+Bài toán có một depot, ký hiệu là $0$, là nơi các xe tải xuất phát và quay về sau khi hoàn thành nhiệm vụ. Có $P$ xe tải, mỗi xe tải mang theo một drone. Mỗi xe tải được gán cho nhiều nhất một điểm triển khai, và tại điểm đó drone có thể thực hiện nhiều chuyến bay liên tiếp.
+
+Khi một xe tải được gán đến điểm triển khai $d$, chi phí di chuyển của xe tải thường được tính là chi phí đi từ depot đến $d$ và quay lại depot. Nếu ký hiệu $c_{0d}$ là chi phí di chuyển một chiều từ depot đến điểm triển khai $d$, thì chi phí xe tải tương ứng là:
+\begin{equation}
+2c_{0d}.
+\end{equation}
+
+Drone được phóng từ điểm triển khai, thực hiện một chuyến bay để phục vụ một số cạnh yêu cầu, sau đó quay lại đúng điểm triển khai ban đầu. Sau mỗi chuyến bay, drone có thể được thay pin hoặc sạc lại, vì vậy một drone có thể thực hiện nhiều chuyến bay. Đây là lý do bài toán có cụm từ \textit{multi-trip}.
+
+\subsection{Tập điểm triển khai}
+
+Gọi $\mathcal{D}$ là tập các điểm triển khai tiềm năng, với $D = |\mathcal{D}|$. Các điểm này là những vị trí mà xe tải có thể dừng lại để phóng, thu hồi, thay pin hoặc xử lý drone. Số điểm triển khai tiềm năng thường lớn hơn hoặc bằng số xe tải:
+\begin{equation}
+D \geq P.
+\end{equation}
+
+Mỗi điểm triển khai có thể được hiểu như một cơ sở tạm thời được mở nếu có xe tải được điều đến đó. Hai xe tải không được sử dụng cùng một điểm triển khai. Vì vậy, bài toán không chỉ là bài toán định tuyến, mà còn chứa quyết định chọn vị trí. Nếu ký hiệu $z_d$ là biến nhị phân cho biết điểm triển khai $d$ có được sử dụng hay không, ta có:
+\begin{equation}
+z_d =
+\begin{cases}
+1, & \text{nếu điểm triển khai } d \text{ được sử dụng},\\
+0, & \text{ngược lại}.
+\end{cases}
+\end{equation}
+
+\subsection{Tập đường cần phục vụ}
+
+Đối tượng phục vụ của bài toán là một tập các đường, thường là các đường cong trong mặt phẳng. Mỗi đường cần được drone bay qua toàn bộ để thực hiện nhiệm vụ kiểm tra hoặc giám sát. Khác với bài toán định tuyến nút, ở đây yêu cầu không nằm tại các đỉnh mà nằm trên các cạnh hoặc đoạn tuyến. Vì vậy, bài toán thuộc nhóm bài toán định tuyến trên cung.
+
+Trong mô hình liên tục MM-MT-dLARP, drone có thể đi vào một đường tại bất kỳ điểm nào, phục vụ một phần của đường, sau đó rời khỏi đường tại một điểm khác. Điều này phản ánh đúng khả năng bay của drone, vì drone có thể di chuyển ngoài mạng và không bắt buộc phải đi theo các cạnh có sẵn như phương tiện mặt đất. Tuy nhiên, chính đặc điểm này cũng làm cho bài toán trở thành một bài toán tối ưu liên tục khó giải.
+
+Sau khi rời rạc hóa, tập đường cần phục vụ được biểu diễn thành tập cạnh yêu cầu, ký hiệu là $E_R$. Mỗi cạnh yêu cầu $e \in E_R$ có chi phí phục vụ $c^s_e > 0$. Một cạnh yêu cầu chỉ được xem là đã hoàn thành khi drone bay dọc theo cạnh đó ở trạng thái phục vụ, không phải chỉ bay qua như một đoạn di chuyển chết.
+
+\subsection{Giới hạn thời lượng bay}
+
+Mỗi chuyến bay của drone bị giới hạn bởi thời lượng hoặc quãng đường bay tối đa, ký hiệu là $L$. Đây là tham số thể hiện dung lượng pin hoặc giới hạn vận hành an toàn của drone. Nếu một chuyến bay vượt quá $L$, chuyến bay đó không khả thi.
+
+Giới hạn $L$ được áp dụng cho từng chuyến bay riêng lẻ, không phải cho tổng thời gian hoạt động của drone tại một điểm triển khai. Nói cách khác, một drone có thể thực hiện nhiều chuyến bay, nhưng mỗi chuyến bay phải thỏa mãn:
+\begin{equation}
+\text{cost}(\text{flight}) \leq L.
+\end{equation}
+
+Tổng chi phí của tất cả các chuyến bay từ cùng một điểm triển khai vẫn được dùng để tính thời gian hoàn thành của xe tải--drone tương ứng trong hàm mục tiêu min--max.
+
+\section{Hàm mục tiêu min--max}
+
+Mục tiêu của MM-MT-dLARP là tối thiểu hóa thời gian hoàn thành lớn nhất trong các xe tải--drone. Với mỗi điểm triển khai $d$, nếu điểm này được sử dụng, tổng thời gian tương ứng bao gồm:
+\begin{itemize}
+\item thời gian xe tải đi từ depot đến điểm triển khai và quay về;
+\item tổng thời gian của tất cả các chuyến bay drone xuất phát từ điểm triển khai đó.
+\end{itemize}
+
+Gọi $\mathcal{K} = \{1,2,\ldots,K\}$ là tập chỉ số các chuyến bay tối đa có thể xét cho mỗi điểm triển khai. Với mỗi $d \in \mathcal{D}$ và $k \in \mathcal{K}$, gọi $C_{dk}$ là chi phí của chuyến bay thứ $k$ xuất phát từ điểm triển khai $d$. Khi đó tổng chi phí gắn với điểm triển khai $d$ là:
+\begin{equation}
+T_d = 2c_{0d}z_d + \sum_{k \in \mathcal{K}} C_{dk}.
+\end{equation}
+
+Hàm mục tiêu min--max được viết dưới dạng:
+\begin{equation}
+\min \max_{d \in \mathcal{D}} T_d.
+\end{equation}
+
+Để đưa về dạng tuyến tính, ta sử dụng biến phụ $t$ biểu diễn makespan, tức thời gian hoàn thành lớn nhất. Khi đó hàm mục tiêu trở thành:
+\begin{equation}
+\min t,
+\end{equation}
+với các ràng buộc:
+\begin{equation}
+2c_{0d}z_d + \sum_{k \in \mathcal{K}} C_{dk} \leq t,
+\quad \forall d \in \mathcal{D}.
+\end{equation}
+
+Ý nghĩa của hàm mục tiêu này là cân bằng tải giữa các xe tải--drone. Một nghiệm tốt không chỉ có tổng chi phí nhỏ, mà còn tránh trường hợp một drone phải thực hiện quá nhiều nhiệm vụ trong khi các drone khác gần như không hoạt động.
+
+Trong đồ án này, giá trị $t$ cũng là tiêu chí đánh giá chính của các giải thuật tìm kiếm cục bộ. Khi một phép biến đổi nghiệm được thực hiện, nghiệm mới được xem là cải thiện nếu làm giảm makespan hoặc cải thiện cấu trúc nghiệm mà không vi phạm các ràng buộc khả thi.
+
+\section{Các ràng buộc chính}
+
+\subsection{Ràng buộc phục vụ toàn bộ cạnh yêu cầu}
+
+Mỗi cạnh yêu cầu phải được phục vụ ít nhất một lần bởi một chuyến bay drone nào đó. Trong mô hình rời rạc, gọi $x^{dk}_e$ là biến nhị phân nhận giá trị $1$ nếu cạnh $e$ được đi qua trong chuyến bay $k$ xuất phát từ điểm triển khai $d$. Với cạnh yêu cầu $e \in E_R$, biến $x^{dk}_e = 1$ thể hiện rằng cạnh này được drone phục vụ trong chuyến bay tương ứng.
+
+Ràng buộc phục vụ toàn bộ cạnh yêu cầu được viết là:
+\begin{equation}
+\sum_{d \in \mathcal{D}} \sum_{k \in \mathcal{K}} x^{dk}_e \geq 1,
+\quad \forall e \in E_R.
+\end{equation}
+
+Trong một số cài đặt thuật toán, ràng buộc này có thể được duy trì dưới dạng bằng:
+\begin{equation}
+\sum_{d \in \mathcal{D}} \sum_{k \in \mathcal{K}} x^{dk}_e = 1,
+\quad \forall e \in E_R,
+\end{equation}
+vì việc phục vụ lặp lại một cạnh yêu cầu thường làm tăng chi phí và không mang lại lợi ích. Tuy nhiên, trong mô hình tổng quát của bài báo, dạng bất đẳng thức được dùng để thuận lợi cho nghiên cứu đa diện và thuật toán branch-and-cut \cite{corberan2025mmdlarp}.
+
+\subsection{Ràng buộc mỗi chuyến bay bắt đầu và kết thúc tại điểm triển khai}
+
+Mỗi chuyến bay drone phải là một chu trình đóng bắt đầu và kết thúc tại cùng một điểm triển khai. Điều này bảo đảm drone được thu hồi tại đúng vị trí xe tải đang chờ.
+
+Trong biểu diễn đồ thị, một chuyến bay hợp lệ phải thỏa mãn hai điều kiện chính. Thứ nhất, bậc của mỗi đỉnh trong đồ thị con ứng với chuyến bay phải là số chẵn, vì drone đi vào và đi ra khỏi mỗi đỉnh cùng số lần. Điều kiện này có thể biểu diễn dưới dạng:
+\begin{equation}
+(x^{dk} + y^{dk})(\delta(v)) \equiv 0 \pmod{2},
+\quad \forall v \in V,\ \forall d \in \mathcal{D},\ \forall k \in \mathcal{K},
+\end{equation}
+trong đó $y^{dk}_e$ là biến biểu diễn lần đi qua thứ hai trên cạnh bay chết, và $\delta(v)$ là tập các cạnh kề với đỉnh $v$.
+
+Thứ hai, đồ thị con của chuyến bay phải liên thông với điểm triển khai $d$. Nếu một nhóm cạnh được chọn nhưng không nối với điểm triển khai, ta sẽ thu được một chu trình con không thể thực hiện trong chuyến bay thực tế. Ràng buộc loại bỏ chu trình con có thể viết dưới dạng:
+\begin{equation}
+(x^{dk} + y^{dk})(\delta(S)) \geq 2x^{dk}_f,
+\quad
+\forall S \subseteq V \setminus \{d\},\quad
+\forall f \in E(S),
+\forall d \in \mathcal{D},
+\forall k \in \mathcal{K}.
+\end{equation}
+
+Về mặt thuật toán tìm kiếm cục bộ, thay vì kiểm tra trực tiếp các bất đẳng thức trên, một chuyến bay thường được biểu diễn bằng một chuỗi có thứ tự các cạnh yêu cầu. Khi tính chi phí chuyến bay, ta thêm chi phí bay chết từ điểm triển khai đến cạnh đầu tiên, giữa các cạnh liên tiếp, và từ cạnh cuối cùng quay về điểm triển khai. Cách biểu diễn này tự nhiên bảo đảm mỗi chuyến bay bắt đầu và kết thúc tại đúng điểm triển khai.
+
+\subsection{Ràng buộc giới hạn thời lượng bay}
+
+Mỗi chuyến bay phải có chi phí không vượt quá giới hạn \(L\). Trong mô hình rời rạc, ràng buộc giới hạn thời lượng bay của chuyến bay \(k\) xuất phát từ điểm triển khai \(d\) được viết là:
+\begin{equation}
+\sum_{e \in E_R} c^s_e x^{dk}_e
++
+\sum_{e \in E_{NR}} c_e \left(x^{dk}_e + y^{dk}_e\right)
+\leq L z^d,
+\quad \forall\, dk \in \mathcal{D} \times \mathcal{K}.
+\end{equation}
+
+Trong đó:
+\begin{itemize}
+    \item \(E_R\) là tập cạnh yêu cầu;
+    \item \(E_{NR}\) là tập cạnh bay chết;
+    \item \(c^s_e\) là chi phí phục vụ cạnh yêu cầu \(e\);
+    \item \(c_e\) là chi phí bay chết trên cạnh \(e\);
+    \item \(x^{dk}_e\) và \(y^{dk}_e\) là các biến quyết định liên quan đến việc chuyến bay \(k\) tại điểm triển khai \(d\) đi qua cạnh \(e\);
+    \item \(z^d\) là biến cho biết điểm triển khai \(d\) có được sử dụng hay không.
+\end{itemize}
+
+Nếu \(z^d = 0\), nghĩa là điểm triển khai \(d\) không được sử dụng, ràng buộc trên buộc mọi chuyến bay xuất phát từ \(d\) phải rỗng. Nếu \(z^d = 1\), mỗi chuyến bay từ \(d\) được phép hoạt động nhưng phải có chi phí không vượt quá \(L\).
+
+\subsection{Ràng buộc số điểm triển khai được sử dụng}
+
+Vì có $P$ xe tải, số điểm triển khai được sử dụng không được vượt quá $P$. Ràng buộc này được biểu diễn bởi:
+\begin{equation}
+\sum_{d \in \mathcal{D}} z_d \leq P.
+\end{equation}
+
+Trong trường hợp yêu cầu sử dụng đúng $P$ xe tải, ràng buộc trên có thể được thay bằng:
+\begin{equation}
+\sum_{d \in \mathcal{D}} z_d = P.
+\end{equation}
+
+Tuy nhiên, dạng $\leq P$ linh hoạt hơn và phù hợp với mô hình trong bài báo. Nếu một điểm triển khai không được chọn, tất cả các chuyến bay gắn với điểm đó đều rỗng. Nếu một điểm triển khai được chọn, nó tương ứng với một xe tải và một drone thực hiện một hoặc nhiều chuyến bay.
+
+\section{Rời rạc hóa bài toán}
+
+\subsection{Từ MM-MT-dLARP sang MM-MT-LARP}
+
+MM-MT-dLARP là bài toán liên tục vì drone có thể đi vào hoặc rời khỏi một đường tại bất kỳ điểm nào trên đường đó. Để xây dựng mô hình toán và thuật toán, bài báo rời rạc hóa bài toán bằng cách xấp xỉ mỗi đường cong bởi một chuỗi đa giác hữu hạn. Sau bước này, drone chỉ được phép đi vào hoặc rời khỏi đường tại các điểm đã được chọn trong chuỗi đa giác.
+
+Bài toán rời rạc thu được được gọi là \textit{Min--Max Multi--Trip Location Arc Routing Problem}, viết tắt là MM-MT-LARP. Bài toán này được định nghĩa trên một đồ thị vô hướng:
+\begin{equation}
+G = (V, E).
+\end{equation}
+
+Tập đỉnh $V$ bao gồm:
+\begin{itemize}
+\item các đỉnh nằm trên các đường cần phục vụ sau khi rời rạc hóa;
+\item các điểm triển khai trong $\mathcal{D}$;
+\item depot hoặc thông tin chi phí từ depot đến các điểm triển khai.
+\end{itemize}
+
+Tập cạnh $E$ được chia thành hai nhóm:
+\begin{equation}
+E = E_R \cup E_{NR},
+\end{equation}
+trong đó $E_R$ là tập cạnh yêu cầu cần được phục vụ, còn $E_{NR}$ là tập cạnh không yêu cầu dùng cho di chuyển chết của drone.
+
+Rời rạc hóa giúp chuyển bài toán từ miền liên tục sang bài toán tối ưu tổ hợp trên đồ thị. Tuy nhiên, nếu số điểm trung gian trên các đường quá lớn, kích thước đồ thị tăng nhanh, đặc biệt vì tập cạnh bay chết thường được xây dựng gần như đầy đủ giữa các cặp đỉnh. Do đó, việc lựa chọn số lượng và vị trí điểm trung gian là một yếu tố quan trọng trong thiết kế thuật toán.
+
+\subsection{Biểu diễn đường cong bằng chuỗi đa giác}
+
+Giả sử một đường cong cần phục vụ được ký hiệu là $\ell$. Đường này được xấp xỉ bởi một dãy điểm:
+\begin{equation}
+p^\ell_0, p^\ell_1, \ldots, p^\ell_{m_\ell}.
+\end{equation}
+
+Các điểm liên tiếp tạo thành các đoạn thẳng:
+\begin{equation}
+(p^\ell_0, p^\ell_1),\quad
+(p^\ell_1, p^\ell_2),\quad
+\ldots,\quad
+(p^\ell_{m_\ell-1}, p^\ell_{m_\ell}).
+\end{equation}
+
+Mỗi đoạn thẳng này trở thành một cạnh yêu cầu trong tập $E_R$. Nếu chi phí phục vụ của đường gốc $\ell$ là $c^s_\ell$, thì chi phí phục vụ của các đoạn con được phân bổ sao cho tổng chi phí của chúng bằng chi phí phục vụ đường gốc:
+\begin{equation}
+\sum_{e \in E_R(\ell)} c^s_e = c^s_\ell,
+\end{equation}
+trong đó $E_R(\ell)$ là tập các cạnh yêu cầu sinh ra từ đường $\ell$.
+
+Cách biểu diễn này cho phép drone phục vụ từng phần của đường thay vì bắt buộc phải đi từ đầu đến cuối đường gốc. Nếu một điểm trung gian được chọn làm điểm vào hoặc điểm ra, drone có thể phục vụ một đoạn con, rời khỏi đường, bay chết đến một vị trí khác và tiếp tục phục vụ đoạn khác. Đây là đặc trưng quan trọng giúp drone tạo ra các nghiệm linh hoạt hơn so với phương tiện mặt đất.
+
+\subsection{Cạnh phục vụ và cạnh bay chết}
+
+Trong MM-MT-LARP, cần phân biệt rõ hai loại cạnh: cạnh phục vụ và cạnh bay chết.
+
+Cạnh phục vụ là các cạnh thuộc $E_R$. Khi drone bay dọc theo cạnh này ở trạng thái phục vụ, nhiệm vụ kiểm tra hoặc giám sát trên cạnh đó được hoàn thành. Chi phí tương ứng là $c^s_e$.
+
+Cạnh bay chết là các cạnh thuộc $E_{NR}$. Đây là các đoạn di chuyển của drone khi không thực hiện phục vụ, chẳng hạn:
+\begin{itemize}
+\item bay từ điểm triển khai đến cạnh yêu cầu đầu tiên;
+\item bay giữa hai cạnh yêu cầu không kề nhau;
+\item bay từ cạnh yêu cầu cuối cùng quay về điểm triển khai.
+\end{itemize}
+
+Vì drone có thể bay trực tiếp giữa hai điểm bất kỳ, tập cạnh bay chết thường chứa cạnh giữa mọi cặp đỉnh trong $V$. Chi phí bay chết thường được tính tỉ lệ với khoảng cách Euclid giữa hai điểm:
+\begin{equation}
+c_{ij} \propto \text{dist}(i,j).
+\end{equation}
+
+Với mỗi cạnh yêu cầu $e \in E_R$, mô hình cũng xét một cạnh bay chết song song $e' \in E_{NR}$ nối cùng hai đầu mút. Điều này cho phép phân biệt hai tình huống:
+\begin{itemize}
+\item drone bay dọc cạnh $e$ để phục vụ, chịu chi phí $c^s_e$;
+\item drone bay qua cùng đoạn hình học nhưng không phục vụ, chịu chi phí bay chết $c_{e'}$.
+\end{itemize}
+
+Thông thường ta có:
+\begin{equation}
+c^s_e \geq c_{e'},
+\end{equation}
+vì bay phục vụ có thể chậm hơn hoặc tốn chi phí hơn so với bay chết.
+
+\section{Độ khó của bài toán}
+
+MM-MT-dLARP là một bài toán khó do kết hợp nhiều tầng quyết định phụ thuộc lẫn nhau. Thứ nhất, bài toán phải chọn tối đa $P$ điểm triển khai trong tập $\mathcal{D}$. Đây là thành phần của bài toán vị trí. Thứ hai, các cạnh yêu cầu phải được phân công cho các drone và các chuyến bay cụ thể. Đây là thành phần phân cụm và phân tải. Thứ ba, với mỗi chuyến bay, cần tìm thứ tự phục vụ và hướng đi của các cạnh sao cho chi phí nhỏ và không vượt quá giới hạn $L$. Đây là thành phần định tuyến trên cung.
+
+Ngoài ra, hàm mục tiêu min--max làm bài toán khó hơn so với mục tiêu tối thiểu hóa tổng chi phí. Một phép di chuyển có thể làm giảm tổng chi phí nhưng không cải thiện makespan nếu không tác động đến điểm triển khai đang có tải lớn nhất. Vì vậy, các giải thuật tìm kiếm cục bộ cho bài toán này cần tập trung nhiều vào điểm nghẽn, tức xe tải--drone có tổng thời gian lớn nhất.
+
+Kích thước mô hình rời rạc cũng tăng rất nhanh. Nếu số đỉnh sau rời rạc hóa là $|V|$, tập cạnh bay chết có thể có kích thước bậc $O(|V|^2)$ do drone có thể bay trực tiếp giữa nhiều cặp điểm. Khi xét thêm $D$ điểm triển khai và tối đa $K$ chuyến bay cho mỗi điểm triển khai, số biến định tuyến tăng theo bậc:
+\begin{equation}
+O\left(DK\left(|E_R| + |E_{NR}|\right)\right).
+\end{equation}
+
+Điều này giải thích vì sao phương pháp exact như branch-and-cut chỉ phù hợp với các thể hiện nhỏ. Trong nghiên cứu gốc, thuật toán branch-and-cut chỉ được áp dụng hiệu quả cho các thể hiện nhỏ của MM-MT-LARP không xét điểm trung gian, trong khi thuật toán matheuristic được dùng để xử lý các thể hiện lớn hơn của MM-MT-dLARP \cite{corberan2025mmdlarp}.
+
+Từ góc nhìn của đồ án, độ khó này là động lực để nghiên cứu các giải thuật tìm kiếm cục bộ như VNS và LNS. Thay vì giải chính xác toàn bộ mô hình, các phương pháp này cải thiện dần nghiệm thông qua các thao tác như chuyển cạnh giữa các chuyến bay, hoán đổi chuỗi cạnh, phá hủy và sửa chữa một phần nghiệm, hoặc tập trung tối ưu điểm triển khai đang gây ra makespan lớn nhất. Cách tiếp cận này phù hợp với bản chất của MM-MT-dLARP, nơi một nghiệm có thể được cải thiện đáng kể bằng các thay đổi cục bộ nhưng có tác động trực tiếp đến sự cân bằng tải giữa các drone.

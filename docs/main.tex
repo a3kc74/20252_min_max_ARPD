@@ -1,0 +1,158 @@
+\documentclass[12pt]{extreport}
+
+% ================== Tiếng Việt và font ==================
+\usepackage[utf8]{vietnam}
+
+% ================== Căn lề ==================
+\usepackage[
+    left=3.50cm,
+    right=2.00cm,
+    top=3.50cm,
+    bottom=3.00cm
+]{geometry}
+
+% ================== Toán học ==================
+\usepackage{amsmath,amssymb,amsfonts,amsthm}
+\usepackage{mathrsfs}
+
+% ================== Bảng biểu ==================
+\usepackage{array}
+\usepackage{longtable}
+\usepackage{multirow}
+\usepackage{booktabs}
+
+\newlength\mylength
+\newcolumntype{C}[1]{>{\centering\arraybackslash}p{#1}}
+
+% ================== Hình ảnh và khung ==================
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{fancybox}
+
+% Nếu cần dùng subfigure, nên dùng subcaption thay cho subfigure cũ
+\usepackage{subcaption}
+
+% ================== TikZ ==================
+\usepackage{tikz}
+\usetikzlibrary{shapes.geometric, positioning, automata}
+
+% ================== Danh sách ==================
+\usepackage{enumitem}
+
+% ================== Màu sắc và code listing ==================
+\usepackage{xcolor}
+\usepackage{listings}
+
+\definecolor{mGreen}{rgb}{0,0.6,0}
+\definecolor{mGray}{rgb}{0.5,0.5,0.5}
+\definecolor{mPurple}{rgb}{0.58,0,0.82}
+\definecolor{backgroundColour}{rgb}{0.95,0.95,0.92}
+
+\lstdefinestyle{CStyle}{
+    backgroundcolor=\color{backgroundColour},
+    commentstyle=\color{mGreen},
+    keywordstyle=\color{magenta},
+    numberstyle=\tiny\color{mGray},
+    stringstyle=\color{mPurple},
+    basicstyle=\footnotesize,
+    breakatwhitespace=false,
+    breaklines=true,
+    captionpos=b,
+    keepspaces=true,
+    numbers=left,
+    numbersep=5pt,
+    showspaces=false,
+    showstringspaces=false,
+    showtabs=false,
+    tabsize=2,
+    language=C
+}
+
+% ================== Header/Footer ==================
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\cfoot{\thepage}
+
+% ================== Link trong PDF ==================
+% Nên để hyperref gần cuối preamble
+\usepackage[unicode,hidelinks]{hyperref}
+
+\definecolor{mGreen}{rgb}{0,0.6,0}
+\definecolor{mGray}{rgb}{0.5,0.5,0.5}
+\definecolor{mPurple}{rgb}{0.58,0,0.82}
+\definecolor{backgroundColour}{rgb}{0.95,0.95,0.92}
+
+\lstdefinestyle{CStyle}{
+	backgroundcolor=\color{backgroundColour},   
+	commentstyle=\color{mGreen},
+	keywordstyle=\color{magenta},
+	numberstyle=\tiny\color{mGray},
+	stringstyle=\color{mPurple},
+	basicstyle=\footnotesize,
+	breakatwhitespace=false,         
+	breaklines=true,                 
+	captionpos=b,                    
+	keepspaces=true,                 
+	numbers=left,                    
+	numbersep=5pt,                  
+	showspaces=false,                
+	showstringspaces=false,
+	showtabs=false,                  
+	tabsize=2,
+	language=C
+}
+
+% \setcounter{secnumdepth}{-1}
+
+\begin{document}
+
+\thispagestyle{empty}
+\thisfancypage{
+	\setlength{\fboxsep}{0pt}
+	\fbox}{}
+
+\begin{center}
+	
+	{\fontsize{13pt}{1}\selectfont\textbf{ĐẠI HỌC BÁCH KHOA HÀ NỘI}}
+	\\
+	{\fontsize{13pt}{1}\selectfont\textbf{TRƯỜNG CÔNG NGHỆ THÔNG TIN VÀ TRUYỀN THÔNG}}
+	\\		
+	\textbf{--------------------  o0o  ---------------------}\\[1cm]
+	\includegraphics[scale=0.5]{resources/BVP-logo bk-rgb.jpg} \\[1.2cm]
+	\textbf{{\large Báo cáo Đồ án II}}
+\textbf{}\\[1cm]
+\textbf{{\large Các giải thuật tìm kiếm cục bộ cho bài toán định tuyến cung bằng drone nhiều chuyến với hàm mục tiêu Min-Max}}\\[0.5cm]
+\end{center}
+\begin{flushleft}
+    \hspace{1.5 cm} \textbf{Giáo viên hướng dẫn:} \\[0.5cm]
+    \hspace{1.5 cm} \textbf{Sinh viên thực hiện:} \\[0.2cm]
+\end{flushleft}
+
+\begin{center}
+    \begin{tabular}{|l|c|}
+        \hline
+        \textbf{Họ và tên} & \textbf{MSSV} \\ 
+        \hline
+        Phạm Anh Khôi & 20230043 \\ 
+        \hline
+    \end{tabular}
+\end{center}
+
+\vspace{1.0cm}
+\begin{center}
+\textbf{{\large Hà Nội - 2026}}\\
+\end{center}
+
+\tableofcontents
+\input{content}
+
+\newpage
+
+%tài liệu tham khảo
+\newpage
+% \nocite{*}
+\bibliographystyle{plain}
+\bibliography{references}
+
+\end{document}
